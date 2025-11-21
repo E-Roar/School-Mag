@@ -17,7 +17,8 @@ import {
   Vector3,
 } from "three";
 import { degToRad } from "three/src/math/MathUtils.js";
-import { pageAtom, pages } from "./UI";
+import { pageAtom } from "./UI";
+import { useBookData } from "../context/BookDataContext";
 
 const easingFactor = 0.5; // Controls the speed of the easing
 const easingFactorFold = 0.3; // Controls the speed of the easing
@@ -25,8 +26,8 @@ const insideCurveStrength = 0.18; // Controls the strength of the curve
 const outsideCurveStrength = 0.05; // Controls the strength of the curve
 const turningCurveStrength = 0.09; // Controls the strength of the curve
 
-const PAGE_WIDTH = 1.28;
-const PAGE_HEIGHT = 1.71; // 4:3 aspect ratio
+const PAGE_HEIGHT = 1.71; // keeps similar physical height
+const PAGE_WIDTH = PAGE_HEIGHT * (210 / 297); // A4 aspect ratio (~0.707:1)
 const PAGE_DEPTH = 0.003;
 const PAGE_SEGMENTS = 30;
 const SEGMENT_WIDTH = PAGE_WIDTH / PAGE_SEGMENTS;
@@ -51,10 +52,12 @@ for (let i = 0; i < position.count; i++) {
   vertex.fromBufferAttribute(position, i); // get the vertex
   const x = vertex.x; // get the x position of the vertex
 
-  const skinIndex = Math.max(0, Math.floor(x / SEGMENT_WIDTH)); // calculate the skin index
+  const rawIndex = Math.max(0, Math.floor(x / SEGMENT_WIDTH)); // calculate the skin index
+  const skinIndex = Math.min(PAGE_SEGMENTS - 1, rawIndex);
   let skinWeight = (x % SEGMENT_WIDTH) / SEGMENT_WIDTH; // calculate the skin weight
+  const nextIndex = Math.min(PAGE_SEGMENTS, skinIndex + 1);
 
-  skinIndexes.push(skinIndex, skinIndex + 1, 0, 0); // set the skin indexes
+  skinIndexes.push(skinIndex, nextIndex, 0, 0); // set the skin indexes
   skinWeights.push(1 - skinWeight, skinWeight, 0, 0); // set the skin weights
 }
 
@@ -85,26 +88,27 @@ const pageMaterials = [
   }),
 ];
 
-pages.forEach((page) => {
-  useTexture.preload(`/textures/${page.front}.jpg`);
-  useTexture.preload(`/textures/${page.back}.jpg`);
-  useTexture.preload(`/textures/book-cover-roughness.jpg`);
-});
-
-const Page = ({ number, front, back, page, opened, bookClosed, ...props }) => {
-  const [picture, picture2, pictureRoughness] = useTexture([
-    `/textures/${front}.jpg`,
-    `/textures/${back}.jpg`,
-    ...(number === 0 || number === pages.length - 1
-      ? [`/textures/book-cover-roughness.jpg`]
-      : []),
-  ]);
+const Page = ({
+  number,
+  frontSrc,
+  backSrc,
+  page,
+  opened,
+  bookClosed,
+  pageCount,
+  ...props
+}) => {
+  const [picture, picture2] = useTexture([frontSrc, backSrc]);
+  const pictureRoughness = useTexture(`/textures/book-cover-roughness.jpg`);
   picture.colorSpace = picture2.colorSpace = SRGBColorSpace;
   const group = useRef();
   const turnedAt = useRef(0);
   const lastOpened = useRef(opened);
 
   const skinnedMeshRef = useRef();
+
+  const isCover = number === 0;
+  const isBackCover = number === pageCount - 1;
 
   const manualSkinnedMesh = useMemo(() => {
     const bones = [];
@@ -127,7 +131,7 @@ const Page = ({ number, front, back, page, opened, bookClosed, ...props }) => {
       new MeshStandardMaterial({
         color: whiteColor,
         map: picture,
-        ...(number === 0
+        ...(isCover
           ? {
               roughnessMap: pictureRoughness,
             }
@@ -140,7 +144,7 @@ const Page = ({ number, front, back, page, opened, bookClosed, ...props }) => {
       new MeshStandardMaterial({
         color: whiteColor,
         map: picture2,
-        ...(number === pages.length - 1
+        ...(isBackCover
           ? {
               roughnessMap: pictureRoughness,
             }
@@ -159,6 +163,33 @@ const Page = ({ number, front, back, page, opened, bookClosed, ...props }) => {
     mesh.bind(skeleton);
     return mesh;
   }, []);
+
+  useEffect(() => {
+    const frontMaterial = manualSkinnedMesh.material[4];
+    const backMaterial = manualSkinnedMesh.material[5];
+
+    frontMaterial.map = picture;
+    backMaterial.map = picture2;
+
+    if (isCover) {
+      frontMaterial.roughnessMap = pictureRoughness;
+      frontMaterial.roughness = undefined;
+    } else {
+      frontMaterial.roughnessMap = null;
+      frontMaterial.roughness = 0.1;
+    }
+
+    if (isBackCover) {
+      backMaterial.roughnessMap = pictureRoughness;
+      backMaterial.roughness = undefined;
+    } else {
+      backMaterial.roughnessMap = null;
+      backMaterial.roughness = 0.1;
+    }
+
+    frontMaterial.needsUpdate = true;
+    backMaterial.needsUpdate = true;
+  }, [isBackCover, isCover, manualSkinnedMesh, picture, picture2, pictureRoughness]);
 
   // useHelper(skinnedMeshRef, SkeletonHelper, "red");
 
@@ -263,46 +294,66 @@ const Page = ({ number, front, back, page, opened, bookClosed, ...props }) => {
 };
 
 export const Book = ({ ...props }) => {
+  const { selectedBook } = useBookData();
+  const pages = selectedBook?.pages ?? [];
+  const pageCount = pages.length;
   const [page] = useAtom(pageAtom);
   const [delayedPage, setDelayedPage] = useState(page);
+  const targetPage = Math.min(page, pageCount);
+
+  useEffect(() => {
+    pages.forEach((pageData) => {
+      if (pageData.frontSrc) {
+        useTexture.preload(pageData.frontSrc);
+      }
+      if (pageData.backSrc) {
+        useTexture.preload(pageData.backSrc);
+      }
+    });
+    useTexture.preload(`/textures/book-cover-roughness.jpg`);
+  }, [pages]);
 
   useEffect(() => {
     let timeout;
     const goToPage = () => {
-      setDelayedPage((delayedPage) => {
-        if (page === delayedPage) {
-          return delayedPage;
+      setDelayedPage((current) => {
+        if (targetPage === current) {
+          return current;
         } else {
           timeout = setTimeout(
-            () => {
-              goToPage();
-            },
-            Math.abs(page - delayedPage) > 2 ? 50 : 150
+            goToPage,
+            Math.abs(targetPage - current) > 2 ? 50 : 150
           );
-          if (page > delayedPage) {
-            return delayedPage + 1;
+          if (targetPage > current) {
+            return current + 1;
           }
-          if (page < delayedPage) {
-            return delayedPage - 1;
+          if (targetPage < current) {
+            return current - 1;
           }
         }
+        return current;
       });
     };
     goToPage();
     return () => {
       clearTimeout(timeout);
     };
-  }, [page]);
+  }, [targetPage]);
+
+  if (!pageCount) {
+    return null;
+  }
 
   return (
     <group {...props} rotation-y={-Math.PI / 2}>
-      {[...pages].map((pageData, index) => (
+      {pages.map((pageData, index) => (
         <Page
-          key={index}
+          key={`${selectedBook.id}-${index}`}
           page={delayedPage}
           number={index}
           opened={delayedPage > index}
-          bookClosed={delayedPage === 0 || delayedPage === pages.length}
+          bookClosed={delayedPage === 0 || delayedPage === pageCount}
+          pageCount={pageCount}
           {...pageData}
         />
       ))}

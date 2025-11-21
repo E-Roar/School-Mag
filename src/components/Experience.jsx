@@ -1,13 +1,21 @@
 import { Environment, Float, OrbitControls } from "@react-three/drei";
 import { Book } from "./Book";
+import { useBookData } from "../context/BookDataContext";
+
 export const Experience = () => {
+  const { selectedBook } = useBookData();
+  const visualSettings = selectedBook?.visualSettings || {};
+  const floatIntensity = visualSettings.floatIntensity ?? 1;
+  const rotationIntensity = visualSettings.rotationIntensity ?? 2;
+  const floatSpeed = visualSettings.floatSpeed ?? 2;
+
   return (
     <>
       <Float
         rotation-x={-Math.PI / 4}
-        floatIntensity={1}
-        speed={2}
-        rotationIntensity={2}
+        floatIntensity={floatIntensity}
+        speed={floatSpeed}
+        rotationIntensity={rotationIntensity}
       >
         <Book />
       </Float>
