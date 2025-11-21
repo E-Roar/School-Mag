@@ -15,10 +15,10 @@ const LoginPanel = ({ onAuthenticated, error, loading }) => {
   };
 
   return (
-    <div className="pointer-events-auto fixed inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur">
+    <div className="pointer-events-auto fixed inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur px-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-3xl bg-slate-900/90 border border-white/10 p-8 shadow-2xl flex flex-col gap-4"
+        className="w-full max-w-sm rounded-2xl md:rounded-3xl bg-slate-900/90 border border-white/10 p-6 md:p-8 shadow-2xl flex flex-col gap-3 md:gap-4"
       >
         <div>
           <p className="text-xs uppercase tracking-[0.4em] text-white/50">
@@ -306,7 +306,7 @@ export const AdminPage = () => {
         {isAuthed && (
           <button
             onClick={handleLogout}
-            className="pointer-events-auto fixed top-6 right-6 z-50 rounded-full bg-red-500/20 text-red-200 border border-red-500/50 px-4 py-2 text-xs uppercase tracking-widest hover:bg-red-500/30 transition shadow-neon"
+            className="pointer-events-auto fixed top-3 md:top-6 right-3 md:right-6 z-50 rounded-full bg-red-500/20 text-red-200 border border-red-500/50 px-3 md:px-4 py-1.5 md:py-2 text-[10px] md:text-xs uppercase tracking-widest hover:bg-red-500/30 transition shadow-neon"
           >
             Logout
           </button>

@@ -384,132 +384,131 @@ export const Dashboard = () => {
   return (
     <>
       <button
-        className="pointer-events-auto fixed top-20 right-6 z-40 rounded-full glass-chip px-4 py-2 text-xs uppercase tracking-widest text-white border border-white/20 hover:bg-white/10 transition shadow-neon"
+        className="pointer-events-auto fixed top-16 md:top-20 right-3 md:right-6 z-40 rounded-full glass-chip px-3 md:px-4 py-1.5 md:py-2 text-[10px] md:text-xs uppercase tracking-widest text-white border border-white/20 hover:bg-white/10 transition shadow-neon"
         onClick={() => setAnalyticsOpen(true)}
       >
         Analytics
       </button>
       <AnalyticsPanel isOpen={analyticsOpen} onClose={() => setAnalyticsOpen(false)} />
-      <aside className="pointer-events-none fixed inset-y-0 right-0 flex items-center pr-4 z-30">
-        <div className="pointer-events-auto w-[28rem] max-w-full glass-panel text-white rounded-3xl border border-white/20 shadow-neon overflow-hidden">
+      <aside className="pointer-events-none fixed inset-y-0 right-0 flex items-center pr-0 md:pr-4 z-30">
+        <div className="pointer-events-auto w-full md:w-[28rem] md:max-w-full glass-panel text-white rounded-none md:rounded-3xl border-0 md:border border-white/20 shadow-neon overflow-hidden h-full md:h-auto">
           <button
-            className="w-full px-6 py-4 flex items-center justify-between text-sm uppercase tracking-widest border-b border-white/10"
+            className="w-full px-4 md:px-6 py-3 md:py-4 flex items-center justify-between text-xs md:text-sm uppercase tracking-widest border-b border-white/10"
             onClick={() => setOpen((prev) => !prev)}
           >
             <span>Admin Dashboard</span>
             <span>{open ? "−" : "+"}</span>
           </button>
-        {open && (
-          <div className="max-h-[70vh] overflow-y-auto p-5 space-y-4 glass-scroll">
-            {selectedBook && (
-              <div className="glass-panel rounded-2xl border border-white/15 p-4 space-y-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-white/50">
-                    Editing
-                  </p>
-                  <h4 className="text-lg font-semibold">{selectedBook.title}</h4>
-                  <p className="text-sm text-white/70">{selectedBook.subtitle}</p>
-                </div>
-                <button
-                  onClick={handleSaveAll}
-                  disabled={saving || isLoading}
-                  className={`w-full rounded-full py-2 text-xs uppercase tracking-[0.35em] font-semibold shadow-neon transition-all ${
-                    saving || isLoading
-                      ? "bg-gray-500/50 cursor-not-allowed"
-                      : saveStatus === "success"
-                      ? "bg-green-500 text-white"
-                      : saveStatus === "error"
-                      ? "bg-red-500 text-white"
-                      : "bg-gradient-to-r from-cyan-300 to-blue-500 text-black hover:opacity-90"
-                  }`}
-                >
-                  {saving
-                    ? "Saving..."
-                    : saveStatus === "success"
-                    ? "✓ Saved Successfully"
-                    : saveStatus === "error"
-                    ? "✗ Save Failed"
-                    : "💾 Save All Changes"}
-                </button>
-                {saveStatus === "success" && (
-                  <p className="text-xs text-green-400 text-center">
-                    All changes saved and synced to database
-                  </p>
-                )}
-                {saveStatus === "error" && (
-                  <p className="text-xs text-red-400 text-center">
-                    Error saving changes. Please try again.
-                  </p>
-                )}
-              </div>
-            )}
-            {selectedBook ? (
-              <>
-                {[
-                  {
-                    id: "issue",
-                    title: "Issue Settings",
-                    subtitle: "Title, date & searchable content",
-                    content: <IssueSettingsPanel book={selectedBook} />,
-                  },
-                  {
-                    id: "visual",
-                    title: "Backdrop & Marquee",
-                    subtitle: "Gradient, fonts, colors, speed",
-                    content: <VisualSettingsPanel book={selectedBook} />,
-                  },
-                  {
-                    id: "pages",
-                    title: "Pages & Spreads",
-                    subtitle: "Upload art, reorder, add/remove",
-                    content: (
-                      <div className="space-y-4">
-                        <button
-                          className="w-full rounded-full bg-gradient-to-r from-cyan-300 to-blue-500 text-black py-2 text-xs uppercase tracking-[0.35em] font-semibold shadow-neon hover:opacity-90 transition"
-                          onClick={() => addPage(selectedBook.id)}
-                        >
-                          Add Spread
-                        </button>
-                        {visiblePages.map((page, index) => (
-                          <PageUploader
-                            key={`${selectedBook.id}-${index}`}
-                            index={index}
-                            page={page}
-                            bookId={selectedBook.id}
-                            updatePageImage={updatePageImage}
-                            canRemove={index > 0 && index < visiblePages.length - 1}
-                            onRemove={() => removePage(selectedBook.id, index)}
-                          />
-                        ))}
-                      </div>
-                    ),
-                  },
-                ].map((section) => (
-                  <AccordionSection
-                    key={section.id}
-                    title={section.title}
-                    description={section.subtitle}
-                    isOpen={openSection === section.id}
-                    onToggle={() =>
-                      setOpenSection((prev) =>
-                        prev === section.id ? null : section.id
-                      )
-                    }
+          {open && (
+            <div className="max-h-[calc(100vh-120px)] md:max-h-[70vh] overflow-y-auto p-4 md:p-5 space-y-3 md:space-y-4 glass-scroll">
+              {selectedBook && (
+                <div className="glass-panel rounded-2xl border border-white/15 p-4 space-y-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-white/50">
+                      Editing
+                    </p>
+                    <h4 className="text-lg font-semibold">{selectedBook.title}</h4>
+                    <p className="text-sm text-white/70">{selectedBook.subtitle}</p>
+                  </div>
+                  <button
+                    onClick={handleSaveAll}
+                    disabled={saving || isLoading}
+                    className={`w-full rounded-full py-2 text-xs uppercase tracking-[0.35em] font-semibold shadow-neon transition-all ${saving || isLoading
+                        ? "bg-gray-500/50 cursor-not-allowed"
+                        : saveStatus === "success"
+                          ? "bg-green-500 text-white"
+                          : saveStatus === "error"
+                            ? "bg-red-500 text-white"
+                            : "bg-gradient-to-r from-cyan-300 to-blue-500 text-black hover:opacity-90"
+                      }`}
                   >
-                    {section.content}
-                  </AccordionSection>
-                ))}
-              </>
-            ) : (
-              <div className="glass-panel rounded-2xl border border-white/15 p-8 text-center space-y-3">
-                <p className="text-white/70">No issue selected</p>
-                <p className="text-xs text-white/50">Use the issue picker on the left to select an issue to edit</p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </aside>
+                    {saving
+                      ? "Saving..."
+                      : saveStatus === "success"
+                        ? "✓ Saved Successfully"
+                        : saveStatus === "error"
+                          ? "✗ Save Failed"
+                          : "💾 Save All Changes"}
+                  </button>
+                  {saveStatus === "success" && (
+                    <p className="text-xs text-green-400 text-center">
+                      All changes saved and synced to database
+                    </p>
+                  )}
+                  {saveStatus === "error" && (
+                    <p className="text-xs text-red-400 text-center">
+                      Error saving changes. Please try again.
+                    </p>
+                  )}
+                </div>
+              )}
+              {selectedBook ? (
+                <>
+                  {[
+                    {
+                      id: "issue",
+                      title: "Issue Settings",
+                      subtitle: "Title, date & searchable content",
+                      content: <IssueSettingsPanel book={selectedBook} />,
+                    },
+                    {
+                      id: "visual",
+                      title: "Backdrop & Marquee",
+                      subtitle: "Gradient, fonts, colors, speed",
+                      content: <VisualSettingsPanel book={selectedBook} />,
+                    },
+                    {
+                      id: "pages",
+                      title: "Pages & Spreads",
+                      subtitle: "Upload art, reorder, add/remove",
+                      content: (
+                        <div className="space-y-4">
+                          <button
+                            className="w-full rounded-full bg-gradient-to-r from-cyan-300 to-blue-500 text-black py-2 text-xs uppercase tracking-[0.35em] font-semibold shadow-neon hover:opacity-90 transition"
+                            onClick={() => addPage(selectedBook.id)}
+                          >
+                            Add Spread
+                          </button>
+                          {visiblePages.map((page, index) => (
+                            <PageUploader
+                              key={`${selectedBook.id}-${index}`}
+                              index={index}
+                              page={page}
+                              bookId={selectedBook.id}
+                              updatePageImage={updatePageImage}
+                              canRemove={index > 0 && index < visiblePages.length - 1}
+                              onRemove={() => removePage(selectedBook.id, index)}
+                            />
+                          ))}
+                        </div>
+                      ),
+                    },
+                  ].map((section) => (
+                    <AccordionSection
+                      key={section.id}
+                      title={section.title}
+                      description={section.subtitle}
+                      isOpen={openSection === section.id}
+                      onToggle={() =>
+                        setOpenSection((prev) =>
+                          prev === section.id ? null : section.id
+                        )
+                      }
+                    >
+                      {section.content}
+                    </AccordionSection>
+                  ))}
+                </>
+              ) : (
+                <div className="glass-panel rounded-2xl border border-white/15 p-8 text-center space-y-3">
+                  <p className="text-white/70">No issue selected</p>
+                  <p className="text-xs text-white/50">Use the issue picker on the left to select an issue to edit</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </aside>
     </>
   );
 };

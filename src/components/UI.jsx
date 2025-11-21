@@ -12,9 +12,8 @@ const MarqueeRow = ({ items, settings, reverse }) => {
   }
   return (
     <div
-      className={`bg-transparent ${
-        reverse ? "animate-horizontal-scroll-2" : "animate-horizontal-scroll"
-      } flex items-center gap-8 w-max px-8`}
+      className={`bg-transparent ${reverse ? "animate-horizontal-scroll-2" : "animate-horizontal-scroll"
+        } flex items-center gap-8 w-max px-8`}
       style={{
         animationDuration: `${settings.marqueeSpeed || 16}s`,
       }}
@@ -80,10 +79,10 @@ export const UI = () => {
     if (!selectedBook || !hasUserInteracted) {
       return;
     }
-    
+
     const audio = new Audio("/audios/page-flip-01a.mp3");
     const playPromise = audio.play();
-    
+
     // Handle play() promise rejection
     if (playPromise !== undefined) {
       playPromise.catch((error) => {
@@ -91,7 +90,7 @@ export const UI = () => {
         // User interaction is already tracked, so next time it will work
       });
     }
-    
+
     return () => {
       audio.pause();
     };
@@ -110,46 +109,44 @@ export const UI = () => {
     page === 0
       ? "Cover"
       : page === pages.length
-      ? "Back Cover"
-      : `Page ${page}`;
+        ? "Back Cover"
+        : `Page ${page}`;
 
   return (
     <>
       <main className="pointer-events-none select-none z-10 fixed inset-0 flex justify-between flex-col">
-        <div className="pointer-events-none mt-10 ml-10 h-20" />
-        <div className="pointer-events-none flex justify-center w-full pb-10">
-          <div className="pointer-events-auto flex items-center gap-4 bg-black/30 backdrop-blur-xl border border-white/20 rounded-full px-6 py-3 text-white">
+        <div className="pointer-events-none mt-4 md:mt-10 ml-4 md:ml-10 h-10 md:h-20" />
+        <div className="pointer-events-none flex justify-center w-full pb-4 md:pb-10 px-2">
+          <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-4 bg-black/30 backdrop-blur-xl border border-white/20 rounded-full px-2 sm:px-6 py-2 sm:py-3 text-white max-w-full overflow-x-auto">
             <button
-              className={`uppercase tracking-[0.3em] text-xs px-3 py-2 rounded-full border ${
-                page === 0 ? "border-white bg-white text-black" : "border-white/40"
-              }`}
+              className={`uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[10px] sm:text-xs px-2 sm:px-3 py-1.5 sm:py-2 rounded-full border whitespace-nowrap ${page === 0 ? "border-white bg-white text-black" : "border-white/40"
+                }`}
               onClick={goToCover}
             >
               Cover
             </button>
             <button
-              className="uppercase tracking-[0.3em] text-xs px-3 py-2 rounded-full border border-white/40 hover:border-white"
+              className="uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[10px] sm:text-xs px-2 sm:px-3 py-1.5 sm:py-2 rounded-full border border-white/40 hover:border-white whitespace-nowrap"
               onClick={goPrev}
               disabled={page === 0}
             >
               Prev
             </button>
-            <div className="min-w-[120px] text-center font-semibold uppercase tracking-[0.4em] text-xs">
+            <div className="min-w-[80px] sm:min-w-[120px] text-center font-semibold uppercase tracking-[0.2em] sm:tracking-[0.4em] text-[10px] sm:text-xs whitespace-nowrap">
               {pageLabel}
             </div>
             <button
-              className="uppercase tracking-[0.3em] text-xs px-3 py-2 rounded-full border border-white/40 hover:border-white"
+              className="uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[10px] sm:text-xs px-2 sm:px-3 py-1.5 sm:py-2 rounded-full border border-white/40 hover:border-white whitespace-nowrap"
               onClick={goNext}
               disabled={page === pages.length}
             >
               Next
             </button>
             <button
-              className={`uppercase tracking-[0.3em] text-xs px-3 py-2 rounded-full border ${
-                page === pages.length
+              className={`uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[10px] sm:text-xs px-2 sm:px-3 py-1.5 sm:py-2 rounded-full border whitespace-nowrap ${page === pages.length
                   ? "border-white bg-white text-black"
                   : "border-white/40"
-              }`}
+                }`}
               onClick={goToBackCover}
             >
               Back
