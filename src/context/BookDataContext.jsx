@@ -158,6 +158,10 @@ export const BookDataProvider = ({ children }) => {
       // Refetch to ensure all users see updates
       refetch();
     },
+    onError: (error) => {
+      console.error("Error updating page image:", error);
+      alert(`Failed to update page image: ${error.message || 'Unknown error'}`);
+    },
   });
 
   const updatePageImage = (bookId, pageIndex, side, file) => {
@@ -194,6 +198,10 @@ export const BookDataProvider = ({ children }) => {
     onSuccess: () => {
       refetch();
     },
+    onError: (error) => {
+      console.error("Error adding page:", error);
+      alert(`Failed to add page: ${error.message || 'Unknown error'}. Check console for details.`);
+    },
   });
 
   const addPage = (bookId) => {
@@ -228,6 +236,10 @@ export const BookDataProvider = ({ children }) => {
     },
     onSuccess: () => {
       refetch();
+    },
+    onError: (error) => {
+      console.error("Error removing page:", error);
+      alert(`Failed to remove page: ${error.message || 'Unknown error'}`);
     },
   });
 
@@ -273,6 +285,10 @@ export const BookDataProvider = ({ children }) => {
       // Refetch to ensure all users see updates
       refetch();
     },
+    onError: (error) => {
+      console.error("Error updating visual settings:", error);
+      alert(`Failed to update visual settings: ${error.message || 'Unknown error'}`);
+    },
   });
 
   const updateVisualSettings = (bookId, changes) => {
@@ -308,6 +324,10 @@ export const BookDataProvider = ({ children }) => {
       // Refetch to ensure all users see updates
       refetch();
     },
+    onError: (error) => {
+      console.error("Error updating book metadata:", error);
+      alert(`Failed to update book: ${error.message || 'Unknown error'}`);
+    },
   });
 
   const updateBookMeta = (bookId, changes) => {
@@ -338,7 +358,10 @@ export const BookDataProvider = ({ children }) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase INSERT error:", error);
+        throw error;
+      }
 
       // Add a cover page
       await supabase.from("pages").insert({
@@ -357,6 +380,16 @@ export const BookDataProvider = ({ children }) => {
         setActiveBookId(newBook.id);
         refetch();
       }
+    },
+    onError: (error) => {
+      console.error("Error creating new book:", error);
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+      alert(`Failed to create new issue: ${error.message || 'Unknown error'}. Check browser console for details.`);
     },
   });
 
@@ -398,6 +431,10 @@ export const BookDataProvider = ({ children }) => {
         }
         refetch();
       }
+    },
+    onError: (error) => {
+      console.error("Error deleting book:", error);
+      alert(`Failed to delete issue: ${error.message || 'Unknown error'}`);
     },
   });
 
