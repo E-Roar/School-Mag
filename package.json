@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/poppins": "^5.2.7",
     "@react-three/drei": "^9.108.1",
     "@react-three/fiber": "^8.16.8",
     "@supabase/supabase-js": "^2.84.0",

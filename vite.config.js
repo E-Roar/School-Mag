@@ -53,5 +53,33 @@ export default defineConfig({
         ],
       },
     }),
+    }),
   ],
+build: {
+  // Optimize chunk splitting for better caching
+  rollupOptions: {
+    output: {
+      manualChunks: {
+        'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'three-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
+            'ui-vendor': ['recharts', 'lucide-react'],
+        },
+    },
+  },
+  // Increase chunk size warning limit
+  chunkSizeWarningLimit: 1000,
+    // Enable minification
+    minify: 'terser',
+      terserOptions: {
+    compress: {
+      drop_console: true, // Remove console.logs in production
+      },
+  },
+},
+// Add preload hints for critical resources
+preview: {
+  headers: {
+    'Cache-Control': 'public, max-age=31536000, immutable',
+    },
+},
 })
