@@ -4,6 +4,7 @@ import { UI } from "../components/UI";
 import { Dashboard } from "../components/Dashboard";
 import { AdminIssuePicker } from "../components/AdminIssuePicker";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
+import { BookDataProvider } from "../context/BookDataContext";
 
 const LoginPanel = ({ onAuthenticated, error, loading }) => {
   const [email, setEmail] = useState("");
@@ -316,7 +317,11 @@ export const AdminPage = () => {
     [isAuthed, error, loading]
   );
 
-  return <SceneLayout>{overlays}</SceneLayout>;
+  return (
+    <BookDataProvider isAdminMode={true}>
+      <SceneLayout>{overlays}</SceneLayout>
+    </BookDataProvider>
+  );
 };
 
 

@@ -18,11 +18,21 @@ const transformBook = (book) => ({
   pages: [], // Will be populated separately
 })
 
-const transformPage = (page) => ({
-  frontSrc: page.front_asset_path ? getSignedUrl('pages', page.front_asset_path) : null,
-  backSrc: page.back_asset_path ? getSignedUrl('pages', page.back_asset_path) : null,
-  label: page.label || `Page ${page.page_number}`,
-})
+
+const transformPage = (page) => {
+  // Import default placeholder at top level
+  const defaultPlaceholder = '/textures/DSC00933.jpg';
+
+  return {
+    frontSrc: page.front_asset_path
+      ? getSignedUrl('pages', page.front_asset_path)
+      : defaultPlaceholder,
+    backSrc: page.back_asset_path
+      ? getSignedUrl('pages', page.back_asset_path)
+      : defaultPlaceholder,
+    label: page.label || `Page ${page.page_number}`,
+  };
+}
 
 // Get signed URL from Supabase Storage
 export const getSignedUrl = (bucket, path) => {
@@ -56,7 +66,6 @@ export const fetchBooks = async () => {
     const { data: books, error: booksError } = await supabase
       .from('books')
       .select('*')
-      .eq('is_published', true)
       .order('release_date', { ascending: false })
 
     if (booksError) {
@@ -114,6 +123,67 @@ export const fetchBooks = async () => {
   } catch (error) {
     console.error('Error fetching books:', error)
     // Always return default books as fallback
+    return defaultBooks
+  }
+}
+
+
+// Fetch only published books for public display
+export const fetchPublishedBooks = async () => {
+  if (!isSupabaseConfigured || !supabase) {
+    console.log('Supabase not configured, using default books')
+    return defaultBooks
+  }
+
+  try {
+    const { data: books, error: booksError } = await supabase
+      .from('books')
+      .select('*')
+      .eq('is_published', true)
+      .order('release_date', { ascending: false })
+
+    if (booksError) {
+      console.warn('Error fetching published books from Supabase:', booksError)
+      return defaultBooks
+    }
+
+    if (!books || books.length === 0) {
+      return defaultBooks
+    }
+
+    const { data: pages, error: pagesError } = await supabase
+      .from('pages')
+      .select('*')
+      .order('book_id, page_number')
+
+    if (pagesError) {
+      console.warn('Error fetching pages from Supabase:', pagesError)
+      return books.map((book) => ({
+        ...transformBook(book),
+        pages: defaultBooks[0]?.pages || [],
+      }))
+    }
+
+    const pagesByBook = (pages || []).reduce((acc, page) => {
+      if (!acc[page.book_id]) acc[page.book_id] = []
+      acc[page.book_id].push(page)
+      return acc
+    }, {})
+
+    const transformedBooks = books.map((book) => {
+      const bookPages = (pagesByBook[book.id] || [])
+        .sort((a, b) => a.page_number - b.page_number)
+        .map(transformPage)
+
+      return {
+        ...transformBook(book),
+        pages: bookPages.length > 0 ? bookPages : defaultBooks[0]?.pages || [],
+      }
+    })
+
+    return transformedBooks.length > 0 ? transformedBooks : defaultBooks
+  } catch (error) {
+    console.error('Error fetching published books:', error)
     return defaultBooks
   }
 }

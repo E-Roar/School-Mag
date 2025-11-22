@@ -306,7 +306,7 @@ const IssueSettingsPanel = ({ book }) => {
         Title
         <input
           type="text"
-          value={book.title}
+          value={book.title ?? ""}
           onChange={(event) => handleChange("title", event.target.value)}
           className="rounded-full bg-black/40 border border-white/10 px-4 py-2 text-white text-sm"
         />
@@ -315,7 +315,7 @@ const IssueSettingsPanel = ({ book }) => {
         Subtitle
         <input
           type="text"
-          value={book.subtitle}
+          value={book.subtitle ?? ""}
           onChange={(event) => handleChange("subtitle", event.target.value)}
           className="rounded-full bg-black/40 border border-white/10 px-4 py-2 text-white text-sm"
         />
@@ -325,7 +325,7 @@ const IssueSettingsPanel = ({ book }) => {
           Issue Tag
           <input
             type="text"
-            value={book.issueTag}
+            value={book.issueTag ?? ""}
             onChange={(event) => handleChange("issueTag", event.target.value)}
             className="rounded-full bg-black/40 border border-white/10 px-4 py-2 text-white text-sm"
           />
@@ -334,7 +334,7 @@ const IssueSettingsPanel = ({ book }) => {
           Issue Date
           <input
             type="date"
-            value={book.releaseDate?.slice(0, 10) || ""}
+            value={book.releaseDate?.slice(0, 10) ?? ""}
             onChange={(event) => handleChange("releaseDate", event.target.value)}
             className="rounded-full bg-black/40 border border-white/10 px-4 py-2 text-white text-sm"
           />
@@ -343,7 +343,7 @@ const IssueSettingsPanel = ({ book }) => {
       <label className="text-xs uppercase tracking-[0.3em] text-white/50 flex flex-col gap-2">
         List of Content (search keywords)
         <textarea
-          value={book.listOfContent}
+          value={book.listOfContent ?? ""}
           onChange={(event) => handleChange("listOfContent", event.target.value)}
           rows={4}
           className="rounded-2xl bg-black/40 border border-white/10 p-3 text-white text-sm resize-none"
@@ -414,12 +414,12 @@ export const Dashboard = () => {
                     onClick={handleSaveAll}
                     disabled={saving || isLoading}
                     className={`w-full rounded-full py-2 text-xs uppercase tracking-[0.35em] font-semibold shadow-neon transition-all ${saving || isLoading
-                        ? "bg-gray-500/50 cursor-not-allowed"
-                        : saveStatus === "success"
-                          ? "bg-green-500 text-white"
-                          : saveStatus === "error"
-                            ? "bg-red-500 text-white"
-                            : "bg-gradient-to-r from-cyan-300 to-blue-500 text-black hover:opacity-90"
+                      ? "bg-gray-500/50 cursor-not-allowed"
+                      : saveStatus === "success"
+                        ? "bg-green-500 text-white"
+                        : saveStatus === "error"
+                          ? "bg-red-500 text-white"
+                          : "bg-gradient-to-r from-cyan-300 to-blue-500 text-black hover:opacity-90"
                       }`}
                   >
                     {saving

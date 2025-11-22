@@ -44,7 +44,6 @@ export const AdminIssuePicker = () => {
                   onClick={async () => {
                     if (confirm("Create a new issue?")) {
                       createNewBook();
-                      setOpen(false);
                     }
                   }}
                 >
