@@ -98,7 +98,16 @@ const Page = ({
   pageCount,
   ...props
 }) => {
-  const [picture, picture2] = useTexture([frontSrc, backSrc]);
+  // Validate image URLs - fall back to default if invalid
+  const defaultTexture = '/textures/DSC00933.jpg';
+  const safeFrontSrc = (frontSrc && typeof frontSrc === 'string' && frontSrc.length > 0)
+    ? frontSrc
+    : defaultTexture;
+  const safeBackSrc = (backSrc && typeof backSrc === 'string' && backSrc.length > 0)
+    ? backSrc
+    : defaultTexture;
+
+  const [picture, picture2] = useTexture([safeFrontSrc, safeBackSrc]);
   const pictureRoughness = useTexture(`/textures/book-cover-roughness.jpg`);
   picture.colorSpace = picture2.colorSpace = SRGBColorSpace;
   const group = useRef();
@@ -133,11 +142,11 @@ const Page = ({
         map: picture,
         ...(isCover
           ? {
-              roughnessMap: pictureRoughness,
-            }
+            roughnessMap: pictureRoughness,
+          }
           : {
-              roughness: 0.1,
-            }),
+            roughness: 0.1,
+          }),
         emissive: emissiveColor,
         emissiveIntensity: 0,
       }),
@@ -146,11 +155,11 @@ const Page = ({
         map: picture2,
         ...(isBackCover
           ? {
-              roughnessMap: pictureRoughness,
-            }
+            roughnessMap: pictureRoughness,
+          }
           : {
-              roughness: 0.1,
-            }),
+            roughness: 0.1,
+          }),
         emissive: emissiveColor,
         emissiveIntensity: 0,
       }),

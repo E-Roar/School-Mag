@@ -272,14 +272,14 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
       if (isSupabaseConfigured && supabase) {
         const page = book.pages[pageIndex];
         // Find page by page_number in database
-        const { data: dbPage } = await supabase
+        // Get all pages for this book and find the one at pageIndex
+        const { data: allPages } = await supabase
           .from("pages")
           .select("id, page_number")
           .eq("book_id", bookId)
-          .order("page_number")
-          .limit(1)
-          .offset(pageIndex)
-          .single();
+          .order("page_number");
+
+        const dbPage = allPages && allPages[pageIndex] ? allPages[pageIndex] : null;
 
         if (dbPage) {
           await supabase.from("pages").delete().eq("id", dbPage.id);
