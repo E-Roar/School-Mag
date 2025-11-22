@@ -127,17 +127,25 @@ export const PageManager = ({ book }) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {pages.map((page, index) => (
-                    <PageCard
-                        key={`${book.id}-${index}`}
-                        index={index}
-                        page={page}
-                        bookId={book.id}
-                        updatePageImage={updatePageImage}
-                        removePage={removePage}
-                        canRemove={index > 0 && index < pages.length - 1}
-                    />
-                ))}
+                {pages.map((page, index) => {
+                    const isCover = index === 0;
+                    const canRemove = !isCover;
+
+                    // Override label for clarity if it's the cover
+                    const displayLabel = isCover ? "Front Cover (Fixed)" : page.label;
+
+                    return (
+                        <PageCard
+                            key={`${book.id}-${index}`}
+                            index={index}
+                            page={{ ...page, label: displayLabel }}
+                            bookId={book.id}
+                            updatePageImage={updatePageImage}
+                            removePage={removePage}
+                            canRemove={canRemove}
+                        />
+                    );
+                })}
             </div>
         </div>
     );

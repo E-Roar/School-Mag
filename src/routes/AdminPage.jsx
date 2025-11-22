@@ -59,6 +59,17 @@ export const AdminPage = () => {
 
     checkSession();
 
+    // Safety timeout to prevent infinite loading
+    const timer = setTimeout(() => {
+      setLoading((l) => {
+        if (l) {
+          console.warn("Auth check timed out (10s), forcing login screen");
+          return false;
+        }
+        return l;
+      });
+    }, 10000);
+
     let subscription = null;
     if (isSupabaseConfigured && supabase) {
       const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -74,6 +85,7 @@ export const AdminPage = () => {
     }
 
     return () => {
+      clearTimeout(timer);
       if (subscription) subscription.unsubscribe();
     };
   }, []);

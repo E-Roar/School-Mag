@@ -12,60 +12,9 @@ import {
   defaultPagePlaceholder,
   defaultVisualSettings,
 } from "../data/defaultBooks";
+import { hydrateBook, withVisualDefaults } from "../utils/bookUtils";
 
 const BookDataContext = createContext();
-
-const normalizePages = (pages) => {
-  if (!pages || pages.length === 0) return [];
-  // Ensure cover (page 0) exists
-  const hasCover = pages.some((p) => p.page_number === 0 || p.label === "Cover");
-  if (!hasCover) {
-    return [
-      {
-        frontSrc: defaultPagePlaceholder,
-        backSrc: defaultPagePlaceholder,
-        label: "Cover",
-        page_number: 0,
-      },
-      ...pages,
-    ];
-  }
-  return pages;
-};
-
-const createBlankSpread = (spreadNumber) => ({
-  frontSrc: defaultPagePlaceholder,
-  backSrc: defaultPagePlaceholder,
-  label: `New Spread ${spreadNumber}`,
-});
-
-const withVisualDefaults = (visual = {}) => ({
-  ...defaultVisualSettings,
-  ...visual,
-  marqueeTexts:
-    visual.marqueeTexts && visual.marqueeTexts.length
-      ? visual.marqueeTexts
-      : defaultVisualSettings.marqueeTexts,
-  floatIntensity:
-    typeof visual.floatIntensity === "number"
-      ? visual.floatIntensity
-      : defaultVisualSettings.floatIntensity,
-  rotationIntensity:
-    typeof visual.rotationIntensity === "number"
-      ? visual.rotationIntensity
-      : defaultVisualSettings.rotationIntensity,
-  floatSpeed:
-    typeof visual.floatSpeed === "number"
-      ? visual.floatSpeed
-      : defaultVisualSettings.floatSpeed,
-});
-
-const hydrateBook = (book) => ({
-  ...book,
-  pages: normalizePages(book.pages ?? []),
-  visualSettings: withVisualDefaults(book.visualSettings),
-  listOfContent: book.listOfContent || "",
-});
 
 export const BookDataProvider = ({ children, isAdminMode = false }) => {
   const queryClient = useQueryClient();
@@ -79,14 +28,15 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
 
   // Fetch books from Supabase or use defaults
   const {
-    data: books = defaultBooks.map(hydrateBook),
+    data: books = [],
     isLoading,
     refetch,
   } = useQuery({
     queryKey: isAdminMode ? ["books", "admin"] : ["books", "public"],
     queryFn: async () => {
       try {
-        return await fetchFunction()
+        const fetchedBooks = await fetchFunction();
+        return fetchedBooks.map(hydrateBook);
       } catch (error) {
         console.error('Failed to fetch books, using defaults:', error)
         return defaultBooks.map(hydrateBook)
@@ -96,8 +46,7 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
     refetchOnWindowFocus: false,
     retry: 1, // Only retry once
     retryDelay: 1000,
-    // Ensure we always have data
-    placeholderData: defaultBooks.map(hydrateBook),
+    // Removed placeholderData to prevent showing stale/default data on load
   });
 
   // Initialize active book
@@ -115,17 +64,33 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
   const updatePageImageMutation = useMutation({
     mutationFn: async ({ bookId, pageIndex, side, file }) => {
       const book = books.find((b) => b.id === bookId);
-      if (!book) {
-        throw new Error('Book not found');
-      }
+      if (!book) throw new Error('Book not found');
 
       const page = book.pages[pageIndex];
-      if (!page) {
-        throw new Error('Page not found');
-      }
+      if (!page) throw new Error('Page not found');
 
-      // If it's a URL string, just update locally
+      // If it's a URL string, update database with that URL (or null if empty)
       if (typeof file === "string") {
+        if (isSupabaseConfigured && supabase) {
+          const pageNumber = pageIndex;
+          const fieldName = side === "front" ? "front_asset_path" : "back_asset_path";
+
+          let path = file;
+          if (file.includes('DSC00933.jpg')) {
+            path = null; // Clear the path in DB to revert to default
+          }
+
+          const { error } = await supabase
+            .from("pages")
+            .update({
+              [fieldName]: path,
+              updated_at: new Date().toISOString()
+            })
+            .eq("book_id", bookId)
+            .eq("page_number", pageNumber);
+
+          if (error) throw error;
+        }
         return { bookId, pageIndex, side, url: file };
       }
 
@@ -134,7 +99,7 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
         try {
           const url = await uploadPageImage(file, bookId, pageIndex, side);
 
-          // Check if upload actually succeeded (uploadPageImage returns null on failure)
+          // Check if upload actually succeeded
           if (!url || url.includes('blob:')) {
             throw new Error('Image upload failed - check Supabase Storage RLS policies');
           }
@@ -146,7 +111,10 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
 
           const { error } = await supabase
             .from("pages")
-            .update({ [fieldName]: path })
+            .update({
+              [fieldName]: path,
+              updated_at: new Date().toISOString()
+            })
             .eq("book_id", bookId)
             .eq("page_number", pageNumber);
 
@@ -158,7 +126,7 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
           return { bookId, pageIndex, side, url };
         } catch (error) {
           console.error('Upload error:', error);
-          throw error; // Re-throw to trigger onError handler
+          throw error;
         }
       }
 
@@ -170,24 +138,39 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
         url: URL.createObjectURL(file),
       };
     },
-    onSuccess: ({ bookId, pageIndex, side, url }) => {
+    onMutate: async ({ bookId, pageIndex, side, file }) => {
       const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
-      queryClient.setQueryData(queryKey, (oldBooks) =>
-        oldBooks.map((book) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousBooks = queryClient.getQueryData(queryKey);
+
+      // Create a temporary URL for immediate display
+      const tempUrl = typeof file === "string" ? file : URL.createObjectURL(file);
+
+      queryClient.setQueryData(queryKey, (oldBooks) => {
+        return oldBooks.map(book => {
           if (book.id !== bookId) return book;
+
           const sideKey = side === "front" ? "frontSrc" : "backSrc";
           const updatedPages = book.pages.map((page, idx) =>
-            idx === pageIndex ? { ...page, [sideKey]: url } : page
+            idx === pageIndex ? { ...page, [sideKey]: tempUrl } : page
           );
+
           return hydrateBook({ ...book, pages: updatedPages });
-        })
-      );
-      // Cache update is sufficient; refetch removed to prevent race conditions
+        });
+      });
+
+      return { previousBooks };
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
       console.error("Error updating page image:", error);
+      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
+      queryClient.setQueryData(queryKey, context.previousBooks);
       alert(`Failed to update page image: ${error.message || 'Unknown error'}`);
     },
+    onSettled: () => {
+      // Invalidate both admin and public queries to ensure sync across views
+      queryClient.invalidateQueries({ queryKey: ["books"] });
+    }
   });
 
   const updatePageImage = (bookId, pageIndex, side, file) => {
@@ -197,65 +180,83 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
   const addPageMutation = useMutation({
     mutationFn: async (bookId) => {
       const book = books.find((b) => b.id === bookId);
-      if (!book) {
-        throw new Error('Book not found');
-      }
+      if (!book) throw new Error('Book not found');
 
       if (isSupabaseConfigured && supabase) {
-        // Query database to find the highest page_number for this book
-        const { data: existingPages, error: queryError } = await supabase
+        // 1. Get the highest page number
+        const { data: maxPageData, error: queryError } = await supabase
           .from("pages")
           .select("page_number")
           .eq("book_id", bookId)
           .order("page_number", { ascending: false })
-          .limit(1);
+          .limit(1)
+          .single();
 
-        if (queryError) {
-          console.error('Error querying pages:', queryError);
-          throw queryError;
-        }
+        if (queryError && queryError.code !== 'PGRST116') throw queryError; // PGRST116 is "no rows found"
 
-        // Calculate the next page number (insert before the last page which is usually the back cover)
-        // If we have pages [0, 1, 2], we want to insert at position 2 (before the back cover at position 2)
-        // So the new order becomes [0, 1, NEW_PAGE(2), OLD_PAGE_2_BECOMES(3)]
-        const maxPageNumber = existingPages && existingPages.length > 0
-          ? existingPages[0].page_number
-          : 0;
+        const nextPageNumber = (maxPageData?.page_number ?? 0) + 1;
 
-        // Insert at second-to-last position (before back cover)
-        // This will be the new max page number
-        const newPageNumber = maxPageNumber + 1;
-
+        // 2. Insert the new page at the end
         const { data, error } = await supabase
           .from("pages")
           .insert({
             book_id: bookId,
-            page_number: newPageNumber,
+            page_number: nextPageNumber,
             front_asset_path: null,
             back_asset_path: null,
-            label: `New Spread ${Math.ceil(newPageNumber / 2)}`,
+            label: `Spread ${nextPageNumber}`,
           })
           .select()
           .single();
 
-        if (error) {
-          console.error('Insert error:', error);
-          throw error;
-        }
+        if (error) throw error;
 
-        return { bookId, pageNumber: newPageNumber };
+        return { bookId, newPage: data };
       }
 
       return { bookId, pageNumber: book.pages.length };
     },
-    onSuccess: ({ bookId, pageNumber }) => {
-      // Trigger refetch to get the new page from database
-      refetch();
+    onMutate: async (bookId) => {
+      // Optimistic Update
+      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
+      await queryClient.cancelQueries({ queryKey });
+      const previousBooks = queryClient.getQueryData(queryKey);
+
+      queryClient.setQueryData(queryKey, (oldBooks) => {
+        return oldBooks.map(book => {
+          if (book.id !== bookId) return book;
+
+          const pages = [...book.pages];
+          const lastPageNumber = pages.length > 0 ? pages[pages.length - 1].page_number : 0;
+          const newPageNumber = lastPageNumber + 1;
+
+          // Create new page
+          const newPage = {
+            id: `temp-${Date.now()}`, // Temp ID
+            book_id: bookId,
+            page_number: newPageNumber,
+            label: `Spread ${newPageNumber}`,
+            frontSrc: defaultPagePlaceholder,
+            backSrc: defaultPagePlaceholder,
+            front_asset_path: null,
+            back_asset_path: null
+          };
+
+          return hydrateBook({ ...book, pages: [...pages, newPage] });
+        });
+      });
+
+      return { previousBooks };
     },
-    onError: (error) => {
+    onError: (error, bookId, context) => {
       console.error("Error adding page:", error);
-      alert(`Failed to add page: ${error.message || 'Unknown error'}. Check console for details.`);
+      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
+      queryClient.setQueryData(queryKey, context.previousBooks);
+      alert(`Failed to add page: ${error.message}`);
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["books"] });
+    }
   });
 
   const addPage = (bookId) => {
@@ -265,36 +266,55 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
   const removePageMutation = useMutation({
     mutationFn: async ({ bookId, pageIndex }) => {
       const book = books.find((b) => b.id === bookId);
-      if (!book || pageIndex <= 0 || pageIndex >= book.pages.length - 1) {
-        return;
+      // Prevent removing Cover (0)
+      if (!book || pageIndex <= 0) {
+        throw new Error("Cannot remove Cover page.");
       }
 
       if (isSupabaseConfigured && supabase) {
-        const page = book.pages[pageIndex];
-        // Find page by page_number in database
-        // Get all pages for this book and find the one at pageIndex
-        const { data: allPages } = await supabase
-          .from("pages")
-          .select("id, page_number")
-          .eq("book_id", bookId)
-          .order("page_number");
+        const pageToRemove = book.pages[pageIndex];
 
-        const dbPage = allPages && allPages[pageIndex] ? allPages[pageIndex] : null;
+        // Ensure we have a valid page number
+        const pageNumber = pageToRemove?.page_number !== undefined ? pageToRemove.page_number : pageIndex;
 
-        if (dbPage) {
-          await supabase.from("pages").delete().eq("id", dbPage.id);
+        if (pageNumber === undefined) {
+          throw new Error("Could not determine page number to delete.");
         }
-      }
 
+        const { error: deleteError } = await supabase
+          .from("pages")
+          .delete()
+          .eq("book_id", bookId)
+          .eq("page_number", pageNumber);
+
+        if (deleteError) throw deleteError;
+      }
       return { bookId, pageIndex };
     },
-    onSuccess: () => {
-      refetch();
+    onMutate: async ({ bookId, pageIndex }) => {
+      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
+      await queryClient.cancelQueries({ queryKey });
+      const previousBooks = queryClient.getQueryData(queryKey);
+
+      queryClient.setQueryData(queryKey, (oldBooks) => {
+        return oldBooks.map(book => {
+          if (book.id !== bookId) return book;
+          const newPages = book.pages.filter((_, index) => index !== pageIndex);
+          return hydrateBook({ ...book, pages: newPages });
+        });
+      });
+
+      return { previousBooks };
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
       console.error("Error removing page:", error);
-      alert(`Failed to remove page: ${error.message || 'Unknown error'}`);
+      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
+      queryClient.setQueryData(queryKey, context.previousBooks);
+      alert(`Failed to remove page: ${error.message}`);
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["books"] });
+    }
   });
 
   const removePage = (bookId, pageIndex) => {
@@ -303,56 +323,33 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
 
   const updateVisualSettingsMutation = useMutation({
     mutationFn: async ({ bookId, changes }) => {
-      // Check if we have a valid UUID before trying to update Supabase
-      // This prevents 400 errors when working with default/mock data
       const isValidId = isUUID(bookId);
-
       if (isSupabaseConfigured && supabase && isValidId) {
         const book = books.find((b) => b.id === bookId);
         if (!book) return;
-
-        const nextVisual = withVisualDefaults({
-          ...book.visualSettings,
-          ...changes,
-        });
-
-        await supabase
-          .from("books")
-          .update({ visual_settings: nextVisual })
-          .eq("id", bookId);
-
+        const nextVisual = withVisualDefaults({ ...book.visualSettings, ...changes });
+        await supabase.from("books").update({ visual_settings: nextVisual }).eq("id", bookId);
         return { bookId, visualSettings: nextVisual };
-      } else if (isSupabaseConfigured && !isValidId) {
-        console.warn("Skipping Supabase update for non-UUID book ID:", bookId);
       }
-
       return { bookId, visualSettings: changes };
     },
     onSuccess: ({ bookId, visualSettings }) => {
       const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
       queryClient.setQueryData(queryKey, (oldBooks) =>
-        oldBooks.map((book) =>
-          book.id === bookId
-            ? { ...book, visualSettings: withVisualDefaults(visualSettings) }
-            : book
-        )
+        oldBooks.map((book) => book.id === bookId ? { ...book, visualSettings: withVisualDefaults(visualSettings) } : book)
       );
-      // Cache update is sufficient; refetch removed to prevent race conditions
     },
-    onError: (error) => {
-      console.error("Error updating visual settings:", error);
-      alert(`Failed to update visual settings: ${error.message || 'Unknown error'}`);
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["books"] });
     },
+    onError: (error) => console.error(error)
   });
 
-  const updateVisualSettings = (bookId, changes) => {
-    updateVisualSettingsMutation.mutate({ bookId, changes });
-  };
+  const updateVisualSettings = (bookId, changes) => updateVisualSettingsMutation.mutate({ bookId, changes });
 
   const updateBookMetaMutation = useMutation({
     mutationFn: async ({ bookId, changes }) => {
       const isValidId = isUUID(bookId);
-
       if (isSupabaseConfigured && supabase && isValidId) {
         const updateData = {
           title: changes.title,
@@ -360,38 +357,30 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
           issue_tag: changes.issueTag,
           release_date: changes.releaseDate,
           list_of_content: changes.listOfContent,
+          is_published: changes.is_published
         };
-
         await supabase.from("books").update(updateData).eq("id", bookId);
-      } else if (isSupabaseConfigured && !isValidId) {
-        console.warn("Skipping Supabase update for non-UUID book ID:", bookId);
       }
-
       return { bookId, changes };
     },
     onSuccess: ({ bookId, changes }) => {
       const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
       queryClient.setQueryData(queryKey, (oldBooks) =>
-        oldBooks.map((book) =>
-          book.id === bookId ? hydrateBook({ ...book, ...changes }) : book
-        )
+        oldBooks.map((book) => book.id === bookId ? hydrateBook({ ...book, ...changes }) : book)
       );
-      // Cache update is sufficient; refetch removed to prevent race conditions
     },
-    onError: (error) => {
-      console.error("Error updating book metadata:", error);
-      alert(`Failed to update book: ${error.message || 'Unknown error'}`);
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["books"] });
     },
+    onError: (error) => console.error(error)
   });
 
-  const updateBookMeta = (bookId, changes) => {
-    updateBookMetaMutation.mutate({ bookId, changes });
-  };
+  const updateBookMeta = (bookId, changes) => updateBookMetaMutation.mutate({ bookId, changes });
 
   const createNewBookMutation = useMutation({
     mutationFn: async () => {
       if (!isSupabaseConfigured || !supabase) {
-        alert("Supabase not configured. Cannot create new book.");
+        alert("Supabase not configured.");
         return;
       }
 
@@ -403,21 +392,13 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
         issue_tag: "Vol. XX",
         release_date: new Date().toISOString().split("T")[0],
         visual_settings: defaultVisualSettings,
-        is_published: false, // Draft by default
+        is_published: false,
       };
 
-      const { data, error } = await supabase
-        .from("books")
-        .insert(newBook)
-        .select()
-        .single();
+      const { data, error } = await supabase.from("books").insert(newBook).select().single();
+      if (error) throw error;
 
-      if (error) {
-        console.error("Supabase INSERT error:", error);
-        throw error;
-      }
-
-      // Add a cover page
+      // 1. Insert Cover (Page 0)
       await supabase.from("pages").insert({
         book_id: data.id,
         page_number: 0,
@@ -426,6 +407,8 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
         back_asset_path: null
       });
 
+      // Removed automatic Back Cover creation as per user request
+
       return hydrateBook(data);
     },
     onSuccess: (newBook) => {
@@ -433,18 +416,14 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
         const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
         queryClient.setQueryData(queryKey, (oldBooks) => [newBook, ...oldBooks]);
         setActiveBookId(newBook.id);
-        refetch();
       }
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["books"] });
+    },
     onError: (error) => {
-      console.error("Error creating new book:", error);
-      console.error("Error details:", {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-      });
-      alert(`Failed to create new issue: ${error.message || 'Unknown error'}. Check browser console for details.`);
+      console.error("Error creating book:", error);
+      alert(`Failed to create issue: ${error.message}`);
     },
   });
 
@@ -454,49 +433,83 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
 
   const deleteBookMutation = useMutation({
     mutationFn: async (bookId) => {
-      if (!isSupabaseConfigured || !supabase) {
-        alert("Supabase not configured. Cannot delete book.");
-        return;
-      }
-
-      if (!isUUID(bookId)) {
-        console.warn("Cannot delete book with invalid UUID:", bookId);
-        return;
-      }
-
+      if (!isSupabaseConfigured || !supabase) return;
       const { error } = await supabase.from("books").delete().eq("id", bookId);
-
       if (error) throw error;
-
       return bookId;
     },
     onSuccess: (deletedBookId) => {
       if (deletedBookId) {
         const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
-        queryClient.setQueryData(queryKey, (oldBooks) =>
-          oldBooks.filter((b) => b.id !== deletedBookId)
-        );
-
-        if (activeBookId === deletedBookId) {
-          const remainingBooks = queryClient.getQueryData(queryKey);
-          if (remainingBooks && remainingBooks.length > 0) {
-            setActiveBookId(remainingBooks[0].id);
-          } else {
-            setActiveBookId(null);
-          }
-        }
-        // Cache update is sufficient
+        queryClient.setQueryData(queryKey, (oldBooks) => oldBooks.filter((b) => b.id !== deletedBookId));
+        if (activeBookId === deletedBookId) setActiveBookId(null);
       }
     },
-    onError: (error) => {
-      console.error("Error deleting book:", error);
-      alert(`Failed to delete issue: ${error.message || 'Unknown error'}`);
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["books"] });
     },
+    onError: (error) => alert(`Failed to delete: ${error.message}`)
   });
 
   function deleteBook(bookId) {
     deleteBookMutation.mutate(bookId);
   }
+
+  // Cleanup Function
+  const cleanupEmptyBooksMutation = useMutation({
+    mutationFn: async () => {
+      if (!isSupabaseConfigured || !supabase) return;
+
+      // Fetch all books with their pages
+      const { data: allBooks, error } = await supabase
+        .from("books")
+        .select("*, pages(id)");
+
+      if (error) throw error;
+
+      // Identify empty books: Title is "New Issue" AND (no pages OR <= 2 pages)
+      // We want to keep at least ONE book if all are empty.
+      const emptyBooks = allBooks.filter(b =>
+        (b.title === "New Issue" || b.title === "Untitled") &&
+        (!b.pages || b.pages.length <= 2)
+      );
+
+      // Sort by created_at desc (assuming id or created_at works, usually higher ID is newer)
+      // We'll keep the newest one if we have to, or just delete all except the currently selected one?
+      // User said: "remove all the issues created that are empty, and only keep one"
+
+      if (emptyBooks.length === 0) return { count: 0 };
+
+      // Keep the most recent one
+      const booksToDelete = emptyBooks.slice(1); // Skip the first one (newest)
+
+      if (booksToDelete.length === 0) return { count: 0 };
+
+      const idsToDelete = booksToDelete.map(b => b.id);
+
+      const { error: deleteError } = await supabase
+        .from("books")
+        .delete()
+        .in("id", idsToDelete);
+
+      if (deleteError) throw deleteError;
+
+      return { count: idsToDelete.length };
+    },
+    onSuccess: ({ count }) => {
+      if (count > 0) {
+        alert(`Cleaned up ${count} empty issues.`);
+      } else {
+        alert("No empty issues found to clean up.");
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["books"] });
+    },
+    onError: (error) => alert(`Cleanup failed: ${error.message}`)
+  });
+
+  const cleanupEmptyBooks = () => cleanupEmptyBooksMutation.mutate();
 
   const value = {
     books,
@@ -511,6 +524,7 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
     refetch,
     createNewBook,
     deleteBook,
+    cleanupEmptyBooks
   };
 
   return (

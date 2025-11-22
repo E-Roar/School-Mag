@@ -18,19 +18,31 @@ const transformBook = (book) => ({
   pages: [], // Will be populated separately
 })
 
+// Define a stable session cache buster (generated once per load)
+const SESSION_CACHE_BUSTER = `?t=${Date.now()}`;
 
 const transformPage = (page) => {
   // Import default placeholder at top level
   const defaultPlaceholder = '/textures/DSC00933.jpg';
 
+  // Add cache buster to force reload of images
+  // CRITICAL FIX: Do NOT use Date.now() as fallback, it causes infinite re-renders/reloads
+  // because the URL changes on every fetch. Use a stable fallback or updated_at.
+  const cacheBuster = page.updated_at
+    ? `?t=${new Date(page.updated_at).getTime()}`
+    : SESSION_CACHE_BUSTER;
+
   return {
     frontSrc: page.front_asset_path
-      ? getSignedUrl('pages', page.front_asset_path)
+      ? getSignedUrl('pages', page.front_asset_path) + cacheBuster
       : defaultPlaceholder,
     backSrc: page.back_asset_path
-      ? getSignedUrl('pages', page.back_asset_path)
+      ? getSignedUrl('pages', page.back_asset_path) + cacheBuster
       : defaultPlaceholder,
     label: page.label || `Page ${page.page_number}`,
+    // Pass raw paths for admin usage if needed
+    frontPath: page.front_asset_path,
+    backPath: page.back_asset_path
   };
 }
 
@@ -59,9 +71,6 @@ export const fetchBooks = async () => {
   try {
     // Check cache first
     const { getCachedBook } = await import('./cacheService')
-    const cachedBooks = []
-    // Try to get first cached book as a test
-    // In production, you'd cache all books
 
     const { data: books, error: booksError } = await supabase
       .from('books')
@@ -69,15 +78,12 @@ export const fetchBooks = async () => {
       .order('release_date', { ascending: false })
 
     if (booksError) {
-      console.warn('Error fetching books from Supabase:', booksError)
-      // Try to use cached data if available
-      return defaultBooks
+      console.error('CRITICAL: Error fetching books from Supabase:', booksError)
+      throw booksError; // Don't fallback to defaults, let the UI handle the error
     }
 
     if (!books || books.length === 0) {
-      // No books in Supabase yet - this is normal for new setups
-      // Default books will be used as fallback
-      return defaultBooks
+      return [] // Return empty if no books, don't show defaults
     }
 
     const { data: pages, error: pagesError } = await supabase
@@ -86,12 +92,8 @@ export const fetchBooks = async () => {
       .order('book_id, page_number')
 
     if (pagesError) {
-      console.warn('Error fetching pages from Supabase:', pagesError)
-      // Return books with default pages as fallback
-      return books.map((book) => ({
-        ...transformBook(book),
-        pages: defaultBooks[0]?.pages || [],
-      }))
+      console.error('CRITICAL: Error fetching pages from Supabase:', pagesError)
+      throw pagesError;
     }
 
     // Group pages by book_id
@@ -109,7 +111,7 @@ export const fetchBooks = async () => {
 
       return {
         ...transformBook(book),
-        pages: bookPages.length > 0 ? bookPages : defaultBooks[0]?.pages || [],
+        pages: bookPages.length > 0 ? bookPages : [], // Don't use default pages
       }
     })
 
@@ -119,11 +121,10 @@ export const fetchBooks = async () => {
       transformedBooks.forEach((book) => cacheBook(book))
     }
 
-    return transformedBooks.length > 0 ? transformedBooks : defaultBooks
+    return transformedBooks
   } catch (error) {
     console.error('Error fetching books:', error)
-    // Always return default books as fallback
-    return defaultBooks
+    throw error; // Propagate error
   }
 }
 
@@ -143,12 +144,12 @@ export const fetchPublishedBooks = async () => {
       .order('release_date', { ascending: false })
 
     if (booksError) {
-      console.warn('Error fetching published books from Supabase:', booksError)
-      return defaultBooks
+      console.error('Error fetching published books:', booksError)
+      throw booksError;
     }
 
     if (!books || books.length === 0) {
-      return defaultBooks
+      return [] // Return empty, allow UI to show "No issues found"
     }
 
     const { data: pages, error: pagesError } = await supabase
@@ -157,11 +158,8 @@ export const fetchPublishedBooks = async () => {
       .order('book_id, page_number')
 
     if (pagesError) {
-      console.warn('Error fetching pages from Supabase:', pagesError)
-      return books.map((book) => ({
-        ...transformBook(book),
-        pages: defaultBooks[0]?.pages || [],
-      }))
+      console.error('Error fetching pages:', pagesError)
+      throw pagesError;
     }
 
     const pagesByBook = (pages || []).reduce((acc, page) => {
@@ -177,14 +175,14 @@ export const fetchPublishedBooks = async () => {
 
       return {
         ...transformBook(book),
-        pages: bookPages.length > 0 ? bookPages : defaultBooks[0]?.pages || [],
+        pages: bookPages.length > 0 ? bookPages : [],
       }
     })
 
-    return transformedBooks.length > 0 ? transformedBooks : defaultBooks
+    return transformedBooks
   } catch (error) {
     console.error('Error fetching published books:', error)
-    return defaultBooks
+    throw error;
   }
 }
 
@@ -303,4 +301,3 @@ export const recordAnalyticsEvent = async (event) => {
     }
   }
 }
-

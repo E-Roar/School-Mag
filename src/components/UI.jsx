@@ -108,9 +108,7 @@ export const UI = () => {
   const pageLabel =
     page === 0
       ? "Cover"
-      : page === pages.length
-        ? "Back Cover"
-        : `Page ${page}`;
+      : `Page ${page}`;
 
   return (
     <>
@@ -141,15 +139,6 @@ export const UI = () => {
               disabled={page === pages.length}
             >
               Next
-            </button>
-            <button
-              className={`uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[10px] sm:text-xs px-2 sm:px-3 py-1.5 sm:py-2 rounded-full border whitespace-nowrap ${page === pages.length
-                  ? "border-white bg-white text-black"
-                  : "border-white/40"
-                }`}
-              onClick={goToBackCover}
-            >
-              Back
             </button>
           </div>
         </div>

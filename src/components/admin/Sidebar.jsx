@@ -1,7 +1,7 @@
 import { useBookData } from "../../context/BookDataContext";
 
 export const Sidebar = () => {
-    const { books, selectedBook, setActiveBookId, createNewBook, deleteBook } = useBookData();
+    const { books, selectedBook, setActiveBookId, createNewBook, deleteBook, cleanupEmptyBooks } = useBookData();
 
     return (
         <aside className="glass-sidebar flex flex-col">
@@ -74,7 +74,17 @@ export const Sidebar = () => {
                 ))}
             </div>
 
-            <div className="p-4 border-t border-white/20">
+            <div className="p-4 border-t border-white/20 space-y-4">
+                <button
+                    onClick={() => {
+                        if (confirm("Are you sure you want to delete all empty/test issues? This cannot be undone.")) {
+                            cleanupEmptyBooks();
+                        }
+                    }}
+                    className="w-full py-2 text-xs text-red-500 hover:bg-red-50 rounded-lg border border-red-200 transition-colors"
+                >
+                    Clean Empty Issues
+                </button>
                 <div className="text-xs text-center text-gray-400">
                     v2.0.0 • E-Roar
                 </div>
