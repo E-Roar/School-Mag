@@ -11,14 +11,23 @@ export const AdminPage = () => {
 
   // Check for existing session on mount
   useEffect(() => {
+    // Handle no Supabase configured case immediately (synchronously)
+    if (!isSupabaseConfigured || !supabase) {
+      console.log("Supabase not configured - using mock auth mode");
+      setLoading(false);
+      return; // Exit early, no cleanup needed
+    }
+
     const checkSession = async () => {
-      if (!isSupabaseConfigured || !supabase) {
-        setLoading(false);
-        return;
-      }
+      const startTime = Date.now();
 
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        const elapsed = Date.now() - startTime;
+        if (elapsed > 2000) {
+          console.warn(`Session check took ${elapsed}ms - possible network issues`);
+        }
 
         if (sessionError) {
           console.error("Session error:", sessionError);
@@ -59,11 +68,11 @@ export const AdminPage = () => {
 
     checkSession();
 
-    // Safety timeout to prevent infinite loading
+    // Safety timeout to prevent infinite loading (only when Supabase is configured)
     const timer = setTimeout(() => {
       setLoading((l) => {
         if (l) {
-          console.warn("Auth check timed out (10s), forcing login screen");
+          console.warn("Auth check timed out (10s) - check your Supabase connection");
           return false;
         }
         return l;

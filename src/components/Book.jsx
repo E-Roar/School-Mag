@@ -17,7 +17,7 @@ import {
   Vector3,
 } from "three";
 import { degToRad } from "three/src/math/MathUtils.js";
-import { pageAtom } from "./UI";
+import { pageAtom } from "../store";
 import { useBookData } from "../context/BookDataContext";
 
 const easingFactor = 0.5; // Controls the speed of the easing
@@ -117,7 +117,6 @@ const Page = ({
   const skinnedMeshRef = useRef();
 
   const isCover = number === 0;
-  const isBackCover = number === pageCount - 1;
 
   const manualSkinnedMesh = useMemo(() => {
     const bones = [];
@@ -153,13 +152,7 @@ const Page = ({
       new MeshStandardMaterial({
         color: whiteColor,
         map: picture2,
-        ...(isBackCover
-          ? {
-            roughnessMap: pictureRoughness,
-          }
-          : {
-            roughness: 0.1,
-          }),
+        roughness: 0.1,
         emissive: emissiveColor,
         emissiveIntensity: 0,
       }),
@@ -188,17 +181,12 @@ const Page = ({
       frontMaterial.roughness = 0.1;
     }
 
-    if (isBackCover) {
-      backMaterial.roughnessMap = pictureRoughness;
-      backMaterial.roughness = undefined;
-    } else {
-      backMaterial.roughnessMap = null;
-      backMaterial.roughness = 0.1;
-    }
+    backMaterial.roughnessMap = null;
+    backMaterial.roughness = 0.1;
 
     frontMaterial.needsUpdate = true;
     backMaterial.needsUpdate = true;
-  }, [isBackCover, isCover, manualSkinnedMesh, picture, picture2, pictureRoughness]);
+  }, [isCover, manualSkinnedMesh, picture, picture2, pictureRoughness]);
 
   // useHelper(skinnedMeshRef, SkeletonHelper, "red");
 
@@ -287,10 +275,14 @@ const Page = ({
         e.stopPropagation();
         setHighlighted(false);
       }}
-      onClick={(e) => {
+      onDoubleClick={(e) => {
         e.stopPropagation();
         setPage(opened ? number : number + 1);
         setHighlighted(false);
+      }}
+      onClick={(e) => {
+        // Allow click to propagate for camera controls
+        // e.stopPropagation(); 
       }}
     >
       <primitive

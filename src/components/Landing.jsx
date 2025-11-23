@@ -39,15 +39,14 @@ export const Landing = () => {
                 {sortedBooks.map((book) => (
                   <li key={book.id}>
                     <button
-                      className={`w-full text-left px-6 py-4 flex gap-4 items-center hover:bg-white/10 transition ${
-                        book.id === selectedBook?.id ? "bg-white/10" : ""
-                      }`}
+                      className={`w-full text-left px-6 py-4 flex gap-4 items-center hover:bg-white/10 transition ${book.id === selectedBook?.id ? "bg-white/10" : ""
+                        }`}
                       onClick={() => {
                         setActiveBookId(book.id);
                         setIsOpen(false);
                       }}
                     >
-                      <div className="w-16 h-20 rounded-2xl overflow-hidden bg-white/10 flex-shrink-0">
+                      <div className="w-20 aspect-[210/297] rounded-lg overflow-hidden bg-white/10 flex-shrink-0 shadow-lg">
                         <img
                           src={book.heroImage}
                           alt={book.title}

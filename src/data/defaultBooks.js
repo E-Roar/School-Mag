@@ -20,6 +20,7 @@ export const defaultVisualSettings = {
   floatIntensity: 1,
   rotationIntensity: 2,
   floatSpeed: 2,
+  direction: "ltr", // Reading direction: 'ltr' or 'rtl'
 };
 
 const buildPagesFromPictures = () => {

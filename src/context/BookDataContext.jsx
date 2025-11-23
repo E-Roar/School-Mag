@@ -16,7 +16,7 @@ import { hydrateBook, withVisualDefaults } from "../utils/bookUtils";
 
 const BookDataContext = createContext();
 
-export const BookDataProvider = ({ children, isAdminMode = false }) => {
+export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclude = null }) => {
   const queryClient = useQueryClient();
   const [activeBookId, setActiveBookId] = useState(null);
 
@@ -32,10 +32,29 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: isAdminMode ? ["books", "admin"] : ["books", "public"],
+    queryKey: isAdminMode ? ["books", "admin"] : ["books", "public", bookIdToInclude],
     queryFn: async () => {
       try {
+        console.log(`[BookDataProvider] Fetching books. Admin: ${isAdminMode}, Include: ${bookIdToInclude}`);
         const fetchedBooks = await fetchFunction();
+        console.log(`[BookDataProvider] Fetched ${fetchedBooks.length} books.`);
+
+        // If we have a specific book to include (e.g. for preview) and it's not in the list
+        if (bookIdToInclude && !fetchedBooks.find(b => b.id === bookIdToInclude)) {
+          console.log(`[BookDataProvider] Book ${bookIdToInclude} not found in list, fetching individually...`);
+          const { fetchBookById } = await import('../lib/supabaseQueries');
+          const extraBook = await fetchBookById(bookIdToInclude);
+          if (extraBook) {
+            console.log(`[BookDataProvider] Found extra book: ${extraBook.title}`);
+            // Check if it's already there to be safe
+            if (!fetchedBooks.find(b => b.id === extraBook.id)) {
+              fetchedBooks.push(extraBook);
+            }
+          } else {
+            console.log(`[BookDataProvider] Extra book ${bookIdToInclude} NOT found.`);
+          }
+        }
+
         return fetchedBooks.map(hydrateBook);
       } catch (error) {
         console.error('Failed to fetch books, using defaults:', error)
@@ -46,15 +65,19 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
     refetchOnWindowFocus: false,
     retry: 1, // Only retry once
     retryDelay: 1000,
-    // Removed placeholderData to prevent showing stale/default data on load
   });
 
   // Initialize active book
   useEffect(() => {
     if (books.length > 0 && !activeBookId) {
-      setActiveBookId(books[0].id);
+      // If we have a specific book to include, select it by default
+      if (bookIdToInclude && books.find(b => b.id === bookIdToInclude)) {
+        setActiveBookId(bookIdToInclude);
+      } else {
+        setActiveBookId(books[0].id);
+      }
     }
-  }, [books, activeBookId]);
+  }, [books, activeBookId, bookIdToInclude]);
 
   const selectedBook = useMemo(
     () => books.find((book) => book.id === activeBookId) ?? null,
@@ -104,10 +127,10 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
             throw new Error('Image upload failed - check Supabase Storage RLS policies');
           }
 
-          // Update database
+          // Update database - always use .webp extension now
           const pageNumber = pageIndex;
           const fieldName = side === "front" ? "front_asset_path" : "back_asset_path";
-          const path = `${bookId}/${pageIndex}-${side}.${file.name.split(".").pop()}`;
+          const path = `${bookId}/${pageIndex}-${side}.webp`;
 
           const { error } = await supabase
             .from("pages")
@@ -139,7 +162,7 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
       };
     },
     onMutate: async ({ bookId, pageIndex, side, file }) => {
-      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
+      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public", bookIdToInclude];
       await queryClient.cancelQueries({ queryKey });
       const previousBooks = queryClient.getQueryData(queryKey);
 
@@ -163,7 +186,7 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
     },
     onError: (error, variables, context) => {
       console.error("Error updating page image:", error);
-      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
+      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public", bookIdToInclude];
       queryClient.setQueryData(queryKey, context.previousBooks);
       alert(`Failed to update page image: ${error.message || 'Unknown error'}`);
     },
@@ -218,7 +241,7 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
     },
     onMutate: async (bookId) => {
       // Optimistic Update
-      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
+      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public", bookIdToInclude];
       await queryClient.cancelQueries({ queryKey });
       const previousBooks = queryClient.getQueryData(queryKey);
 
@@ -250,7 +273,7 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
     },
     onError: (error, bookId, context) => {
       console.error("Error adding page:", error);
-      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
+      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public", bookIdToInclude];
       queryClient.setQueryData(queryKey, context.previousBooks);
       alert(`Failed to add page: ${error.message}`);
     },
@@ -267,7 +290,7 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
     mutationFn: async ({ bookId, pageIndex }) => {
       const book = books.find((b) => b.id === bookId);
       // Prevent removing Cover (0)
-      if (!book || pageIndex <= 0) {
+      if (!book || pageIndex === 0) {
         throw new Error("Cannot remove Cover page.");
       }
 
@@ -292,7 +315,7 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
       return { bookId, pageIndex };
     },
     onMutate: async ({ bookId, pageIndex }) => {
-      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
+      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public", bookIdToInclude];
       await queryClient.cancelQueries({ queryKey });
       const previousBooks = queryClient.getQueryData(queryKey);
 
@@ -308,7 +331,7 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
     },
     onError: (error, variables, context) => {
       console.error("Error removing page:", error);
-      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
+      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public", bookIdToInclude];
       queryClient.setQueryData(queryKey, context.previousBooks);
       alert(`Failed to remove page: ${error.message}`);
     },
@@ -334,7 +357,7 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
       return { bookId, visualSettings: changes };
     },
     onSuccess: ({ bookId, visualSettings }) => {
-      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
+      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public", bookIdToInclude];
       queryClient.setQueryData(queryKey, (oldBooks) =>
         oldBooks.map((book) => book.id === bookId ? { ...book, visualSettings: withVisualDefaults(visualSettings) } : book)
       );
@@ -364,7 +387,7 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
       return { bookId, changes };
     },
     onSuccess: ({ bookId, changes }) => {
-      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
+      const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public", bookIdToInclude];
       queryClient.setQueryData(queryKey, (oldBooks) =>
         oldBooks.map((book) => book.id === bookId ? hydrateBook({ ...book, ...changes }) : book)
       );
@@ -413,7 +436,7 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
     },
     onSuccess: (newBook) => {
       if (newBook) {
-        const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
+        const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public", bookIdToInclude];
         queryClient.setQueryData(queryKey, (oldBooks) => [newBook, ...oldBooks]);
         setActiveBookId(newBook.id);
       }
@@ -440,7 +463,7 @@ export const BookDataProvider = ({ children, isAdminMode = false }) => {
     },
     onSuccess: (deletedBookId) => {
       if (deletedBookId) {
-        const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public"];
+        const queryKey = isAdminMode ? ["books", "admin"] : ["books", "public", bookIdToInclude];
         queryClient.setQueryData(queryKey, (oldBooks) => oldBooks.filter((b) => b.id !== deletedBookId));
         if (activeBookId === deletedBookId) setActiveBookId(null);
       }

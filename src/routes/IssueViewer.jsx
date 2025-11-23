@@ -40,8 +40,9 @@ const ViewerContent = () => {
 };
 
 export const IssueViewer = () => {
+    const { issueId } = useParams();
     return (
-        <BookDataProvider isAdminMode={false}>
+        <BookDataProvider isAdminMode={false} bookIdToInclude={issueId}>
             <ViewerContent />
         </BookDataProvider>
     );

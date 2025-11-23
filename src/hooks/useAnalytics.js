@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useAtom } from "jotai";
-import { pageAtom } from "../components/UI";
+import { pageAtom } from "../store";
 import { useBookData } from "../context/BookDataContext";
 import { recordAnalyticsEvent } from "../lib/supabaseQueries";
 

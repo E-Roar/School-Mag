@@ -21,6 +21,26 @@ export const VisualSettings = ({ book }) => {
                     <p className="text-sm text-gray-500">Customize the 3D viewer environment</p>
                 </div>
 
+                {/* RTL Toggle */}
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
+                    <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-gray-900">Reading Direction</h4>
+                        <p className="text-xs text-gray-600 mt-1">Enable for right-to-left languages (Arabic, Hebrew, etc.)</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={settings.direction === 'rtl'}
+                            onChange={(e) => handleChange("direction", e.target.checked ? 'rtl' : 'ltr')}
+                            className="sr-only peer"
+                        />
+                        <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span className="ml-3 text-sm font-medium text-gray-900">
+                            {settings.direction === 'rtl' ? 'RTL' : 'LTR'}
+                        </span>
+                    </label>
+                </div>
+
                 <div className="grid md:grid-cols-2 gap-8">
                     <div className="space-y-4">
                         <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Background Gradient</h4>

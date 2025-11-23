@@ -169,6 +169,20 @@ const VisualSettingsPanel = ({ book }) => {
         </p>
         <h4 className="text-lg font-semibold text-white">Backdrop Controls</h4>
       </div>
+      <label className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition">
+        <span className="text-xs uppercase tracking-[0.3em] text-white/70">
+          Right to Left (RTL)
+        </span>
+        <div className="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={settings.direction === 'rtl'}
+            onChange={(event) => handleChange("direction", event.target.checked ? 'rtl' : 'ltr')}
+            className="sr-only peer"
+          />
+          <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+        </div>
+      </label>
       <label className="text-xs uppercase tracking-[0.3em] text-white/50 flex flex-col gap-2">
         Gradient Start
         <input
@@ -349,6 +363,20 @@ const IssueSettingsPanel = ({ book }) => {
           className="rounded-2xl bg-black/40 border border-white/10 p-3 text-white text-sm resize-none"
           placeholder="Principal Letter; Arts Festival..."
         />
+      </label>
+      <label className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition">
+        <span className="text-xs uppercase tracking-[0.3em] text-white/70">
+          Published
+        </span>
+        <div className="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={book.is_published ?? false}
+            onChange={(event) => handleChange("is_published", event.target.checked)}
+            className="sr-only peer"
+          />
+          <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+        </div>
       </label>
     </div>
   );

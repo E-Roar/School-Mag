@@ -43,6 +43,7 @@ export const withVisualDefaults = (visual = {}) => ({
         typeof visual.floatSpeed === "number"
             ? visual.floatSpeed
             : defaultVisualSettings.floatSpeed,
+    direction: visual.direction || defaultVisualSettings.direction || 'ltr',
 });
 
 export const hydrateBook = (book) => ({

@@ -15,6 +15,7 @@ const transformBook = (book) => ({
   heroImage: book.hero_image_path || book.cover_thumbnail_url,
   coverThumbnailUrl: book.cover_thumbnail_url || book.hero_image_path,
   visualSettings: book.visual_settings || {},
+  is_published: book.is_published, // Ensure this is passed through
   pages: [], // Will be populated separately
 })
 
@@ -219,27 +220,59 @@ export const fetchBookById = async (bookId) => {
   }
 }
 
-// Upload page image to Supabase Storage
-export const uploadPageImage = async (file, bookId, pageNumber, side) => {
+// Upload page image to Supabase Storage with automatic compression
+export const uploadPageImage = async (file, bookId, pageNumber, side, onProgress = null) => {
   if (!isSupabaseConfigured || !supabase) {
     return URL.createObjectURL(file)
   }
 
-  const fileExt = file.name.split('.').pop()
-  const fileName = `${bookId}/${pageNumber}-${side}.${fileExt}`
-  const filePath = `${fileName}`
-
   try {
+    // Import compression utilities
+    const { compressImage, validateImageFile } = await import('../utils/imageCompression')
+
+    // Validate file
+    const validation = validateImageFile(file, 50) // Max 50MB before compression
+    if (!validation.valid) {
+      throw new Error(validation.error)
+    }
+
+    // Compress and convert to WebP
+    if (onProgress) onProgress({ stage: 'compressing', percent: 0 })
+
+    const compressionResult = await compressImage(file, {}, (progress) => {
+      if (onProgress) onProgress({ stage: 'compressing', percent: progress })
+    })
+
+    const compressedFile = compressionResult.file
+
+    // Log compression stats
+    if (!compressionResult.skipped) {
+      console.log(`Image compressed: ${compressionResult.compressionRatio}% reduction`)
+    }
+
+    // Always use .webp extension for compressed files
+    const fileExt = 'webp'
+    const fileName = `${bookId}/${pageNumber}-${side}.${fileExt}`
+    const filePath = `${fileName}`
+
+    if (onProgress) onProgress({ stage: 'uploading', percent: 0 })
+
     const { data, error } = await supabase.storage
       .from('pages')
-      .upload(filePath, file, { upsert: true })
+      .upload(filePath, compressedFile, {
+        upsert: true,
+        contentType: 'image/webp'
+      })
 
     if (error) throw error
+
+    if (onProgress) onProgress({ stage: 'complete', percent: 100 })
 
     return getSignedUrl('pages', data.path)
   } catch (error) {
     console.error('Error uploading image:', error)
-    return URL.createObjectURL(file) // Fallback to blob URL
+    if (onProgress) onProgress({ stage: 'error', percent: 0, error: error.message })
+    throw error // Throw error instead of silently falling back
   }
 }
 
