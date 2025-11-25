@@ -3,21 +3,10 @@ import { useBookData } from "../../context/BookDataContext";
 import { convertPdfToImages } from "../../lib/pdfUtils";
 
 const PageCard = ({ index, page, bookId, updatePageImage, removePage, canRemove }) => {
-    const [frontUrl, setFrontUrl] = useState("");
-    const [backUrl, setBackUrl] = useState("");
-
     const handleUpload = (e, side) => {
         const file = e.target.files?.[0];
         if (file) updatePageImage(bookId, index, side, file);
         e.target.value = "";
-    };
-
-    const handleUrlSubmit = (side) => {
-        const url = side === "front" ? frontUrl : backUrl;
-        if (url.trim()) {
-            updatePageImage(bookId, index, side, url.trim());
-            side === "front" ? setFrontUrl("") : setBackUrl("");
-        }
     };
 
     return (
@@ -30,8 +19,7 @@ const PageCard = ({ index, page, bookId, updatePageImage, removePage, canRemove 
                 {canRemove && (
                     <button
                         onClick={() => removePage(bookId, index)}
-                        className="text-xs text-red-500 hover:text-red-700 px-3 py-1 rounded-full transition-colors shadow-[3px_3px_6px_rgba(163,177,198,0.5),-3px_-3px_6px_rgba(255,255,255,0.8)] hover:shadow-[inset_2px_2px_5px_rgba(163,177,198,0.5),inset_-2px_-2px_5px_rgba(255,255,255,0.8)]"
-                    >
+                        className="text-xs text-red-500 hover:text-red-700 px-3 py-1 rounded-full transition-colors shadow-[3px_3px_6px_rgba(163,177,198,0.5),-3px_-3px_6px_rgba(255,255,255,0.8)] hover:shadow-[inset_2px_2px_5px_rgba(163,177,198,0.5),inset_-2px_-2px_5px_rgba(255,255,255,0.8)]">
                         Remove
                     </button>
                 )}
@@ -49,25 +37,10 @@ const PageCard = ({ index, page, bookId, updatePageImage, removePage, canRemove 
                         />
                         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                             <label className="cursor-pointer neo-btn text-xs px-4 py-2 hover:scale-105 transition-transform">
-                                Change Image
+                                📤 Upload Image
                                 <input type="file" className="hidden" accept="image/*" onChange={(e) => handleUpload(e, "front")} />
                             </label>
                         </div>
-                    </div>
-                    <div className="flex gap-2">
-                        <input
-                            type="url"
-                            value={frontUrl}
-                            onChange={(e) => setFrontUrl(e.target.value)}
-                            placeholder="Or paste URL"
-                            className="neo-input py-1 text-xs"
-                        />
-                        <button
-                            onClick={() => handleUrlSubmit("front")}
-                            className="px-3 py-1 text-xs font-medium text-gray-600 neo-btn"
-                        >
-                            Use
-                        </button>
                     </div>
                 </div>
 
@@ -82,25 +55,10 @@ const PageCard = ({ index, page, bookId, updatePageImage, removePage, canRemove 
                         />
                         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                             <label className="cursor-pointer neo-btn text-xs px-4 py-2 hover:scale-105 transition-transform">
-                                Change Image
+                                📤 Upload Image
                                 <input type="file" className="hidden" accept="image/*" onChange={(e) => handleUpload(e, "back")} />
                             </label>
                         </div>
-                    </div>
-                    <div className="flex gap-2">
-                        <input
-                            type="url"
-                            value={backUrl}
-                            onChange={(e) => setBackUrl(e.target.value)}
-                            placeholder="Or paste URL"
-                            className="neo-input py-1 text-xs"
-                        />
-                        <button
-                            onClick={() => handleUrlSubmit("back")}
-                            className="px-3 py-1 text-xs font-medium text-gray-600 neo-btn"
-                        >
-                            Use
-                        </button>
                     </div>
                 </div>
             </div>
@@ -237,17 +195,14 @@ export const PageManager = ({ book }) => {
             {/* Pages Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {pages.map((page, index) => {
-                    const isCover = index === 0;
-                    const canRemove = !isCover;
-
-                    // Override label for clarity if it's the cover
-                    const displayLabel = isCover ? "Front Cover (Fixed)" : page.label;
+                    // All pages can now be removed
+                    const canRemove = true;
 
                     return (
                         <PageCard
                             key={`${book.id}-${index}`}
                             index={index}
-                            page={{ ...page, label: displayLabel }}
+                            page={page}
                             bookId={book.id}
                             updatePageImage={updatePageImage}
                             removePage={removePage}

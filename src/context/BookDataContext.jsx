@@ -294,9 +294,8 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
   const removePageMutation = useMutation({
     mutationFn: async ({ bookId, pageIndex }) => {
       const book = books.find((b) => b.id === bookId);
-      // Prevent removing Cover (0)
-      if (!book || pageIndex === 0) {
-        throw new Error("Cannot remove Cover page.");
+      if (!book) {
+        throw new Error("Book not found");
       }
 
       if (isSupabaseConfigured && supabase) {
@@ -430,16 +429,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
       const { data, error } = await supabase.from("books").insert(newBook).select().single();
       if (error) throw error;
 
-      // 1. Insert Cover (Page 0)
-      await supabase.from("pages").insert({
-        book_id: data.id,
-        page_number: 0,
-        label: "Cover",
-        front_asset_path: null,
-        back_asset_path: null
-      });
-
-      // Removed automatic Back Cover creation as per user request
+      // NO AUTOMATIC PAGE CREATION - User adds pages manually or via PDF import
 
       logActivity("Created New Issue", { bookId: data.id, title: newBook.title });
       return hydrateBook(data);
@@ -550,6 +540,8 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
     if (!isSupabaseConfigured || !supabase) return;
 
     try {
+      console.log(`[importPdfPages] Starting import for book ${bookId}, ${files.length} files`);
+
       // 1. Get current max page number
       const { data: maxPageData, error: queryError } = await supabase
         .from("pages")
@@ -561,10 +553,13 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
 
       if (queryError && queryError.code !== 'PGRST116') throw queryError;
 
-      let nextPageNumber = (maxPageData?.page_number ?? 0) + 1;
+      // If book has 0 pages, start from 0, otherwise start from max + 1
+      let nextPageNumber = maxPageData?.page_number !== undefined ? maxPageData.page_number + 1 : 0;
+      console.log(`[importPdfPages] Starting page number: ${nextPageNumber}`);
 
       // 2. Loop through files in pairs
       for (let i = 0; i < files.length; i += 2) {
+        console.log(`[importPdfPages] Processing spread ${nextPageNumber}, files ${i}-${i + 1}`);
         const frontFile = files[i];
         const backFile = files[i + 1]; // might be undefined
 
@@ -581,34 +576,53 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error(`[importPdfPages] Error creating page ${nextPageNumber}:`, error);
+          throw error;
+        }
+        console.log(`[importPdfPages] Created page ${nextPageNumber}, ID: ${newPage.id}`);
 
         // Upload Front
         if (frontFile) {
-          const url = await uploadPageImage(frontFile, bookId, nextPageNumber, 'front');
-          if (url && !url.includes('blob:')) {
-            const path = `${bookId}/${nextPageNumber}-front.webp`;
-            await supabase.from("pages").update({ front_asset_path: path }).eq("id", newPage.id);
+          console.log(`[importPdfPages] Uploading front image for page ${nextPageNumber}`);
+          try {
+            const url = await uploadPageImage(frontFile, bookId, nextPageNumber, 'front');
+            if (url && !url.includes('blob:')) {
+              const path = `${bookId}/${nextPageNumber}-front.webp`;
+              await supabase.from("pages").update({ front_asset_path: path }).eq("id", newPage.id);
+              console.log(`[importPdfPages] Front uploaded successfully: ${path}`);
+            }
+          } catch (uploadError) {
+            console.error(`[importPdfPages] Error uploading front for page ${nextPageNumber}:`, uploadError);
+            // Continue with next page even if one fails
           }
         }
 
         // Upload Back
         if (backFile) {
-          const url = await uploadPageImage(backFile, bookId, nextPageNumber, 'back');
-          if (url && !url.includes('blob:')) {
-            const path = `${bookId}/${nextPageNumber}-back.webp`;
-            await supabase.from("pages").update({ back_asset_path: path }).eq("id", newPage.id);
+          console.log(`[importPdfPages] Uploading back image for page ${nextPageNumber}`);
+          try {
+            const url = await uploadPageImage(backFile, bookId, nextPageNumber, 'back');
+            if (url && !url.includes('blob:')) {
+              const path = `${bookId}/${nextPageNumber}-back.webp`;
+              await supabase.from("pages").update({ back_asset_path: path }).eq("id", newPage.id);
+              console.log(`[importPdfPages] Back uploaded successfully: ${path}`);
+            }
+          } catch (uploadError) {
+            console.error(`[importPdfPages] Error uploading back for page ${nextPageNumber}:`, uploadError);
+            // Continue with next page even if one fails
           }
         }
 
         nextPageNumber++;
       }
 
+      console.log(`[importPdfPages] Import complete! Total spreads: ${nextPageNumber}`);
       logActivity("Imported PDF Pages", { bookId, count: files.length });
       queryClient.invalidateQueries({ queryKey: ["books"] });
       return { success: true };
     } catch (error) {
-      console.error("Error importing PDF pages:", error);
+      console.error("[importPdfPages] Fatal error:", error);
       throw error;
     }
   };

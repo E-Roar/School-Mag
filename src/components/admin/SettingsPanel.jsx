@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { logActivity } from "../../lib/logger";
+import { validateLogoFile, generateLogoVariants } from "../../utils/logoCompression";
 
 export const SettingsPanel = () => {
     const [settings, setSettings] = useState({
         school_name: "",
         school_description: "",
-        school_logo_url: ""
+        school_logo_url: "",
+        logo_size: 48 // Default size in pixels
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState("");
+    const [uploadProgress, setUploadProgress] = useState(null);
 
     // Password Change State
     const [passwords, setPasswords] = useState({ newPassword: "", confirmPassword: "" });
@@ -52,31 +55,71 @@ export const SettingsPanel = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Validate the file
+        const validation = validateLogoFile(file);
+        if (!validation.valid) {
+            setMessage(`Error: ${validation.error}`);
+            return;
+        }
+
         setSaving(true);
-        setMessage("Uploading logo...");
+        setUploadProgress("Validating...");
+        setMessage("");
 
         try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `school-logo-${Date.now()}.${fileExt}`;
-            const filePath = `logos/${fileName}`;
+            setUploadProgress("Compressing and generating variants...");
 
-            // Upload to 'pages' bucket (assuming it's available and has public read)
-            // Ideally we'd have a separate 'assets' bucket, but 'pages' is already configured.
-            const { error: uploadError } = await supabase.storage
-                .from('pages')
-                .upload(filePath, file);
+            // Generate all logo variants
+            const variants = await generateLogoVariants(file);
 
-            if (uploadError) throw uploadError;
+            setUploadProgress("Uploading files...");
 
-            const { data: { publicUrl } } = supabase.storage
-                .from('pages')
-                .getPublicUrl(filePath);
+            const timestamp = Date.now();
+            const uploadedUrls = {};
 
-            setSettings(prev => ({ ...prev, school_logo_url: publicUrl }));
-            setMessage("Logo uploaded! Don't forget to save changes.");
+            // Upload each variant
+            const uploads = [
+                { key: 'full', file: variants.full, path: `logos/logo-${timestamp}.webp` },
+                { key: 'favicon192', file: variants.favicon192, path: `logos/favicon-192-${timestamp}.png` },
+                { key: 'favicon512', file: variants.favicon512, path: `logos/favicon-512-${timestamp}.png` },
+                { key: 'thumbnail', file: variants.thumbnail, path: `logos/thumbnail-${timestamp}.webp` },
+                { key: 'ogImage', file: variants.ogImage, path: `logos/og-image-${timestamp}.jpg` }
+            ];
+
+            for (const upload of uploads) {
+                const { error: uploadError } = await supabase.storage
+                    .from('pages')
+                    .upload(upload.path, upload.file);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('pages')
+                    .getPublicUrl(upload.path);
+
+                uploadedUrls[upload.key] = publicUrl;
+            }
+
+            setUploadProgress("Updating settings...");
+
+            // Update settings with all URLs
+            setSettings(prev => ({
+                ...prev,
+                school_logo_url: uploadedUrls.full,
+                school_logo_favicon_192: uploadedUrls.favicon192,
+                school_logo_favicon_512: uploadedUrls.favicon512,
+                school_logo_thumbnail: uploadedUrls.thumbnail,
+                school_logo_og: uploadedUrls.ogImage
+            }));
+
+            setUploadProgress(null);
+            setMessage("✓ Logo uploaded successfully! Don't forget to save changes.");
+
+            logActivity("Uploaded School Logo", { variants: Object.keys(uploadedUrls) });
         } catch (error) {
             console.error("Error uploading logo:", error);
             setMessage("Error uploading logo: " + error.message);
+            setUploadProgress(null);
         } finally {
             setSaving(false);
         }
@@ -89,26 +132,29 @@ export const SettingsPanel = () => {
             // Check if row exists
             const { data: existing } = await supabase.from('settings').select('id').single();
 
+            const settingsData = {
+                school_name: settings.school_name,
+                school_description: settings.school_description,
+                school_logo_url: settings.school_logo_url,
+                school_logo_favicon_192: settings.school_logo_favicon_192,
+                school_logo_favicon_512: settings.school_logo_favicon_512,
+                school_logo_thumbnail: settings.school_logo_thumbnail,
+                school_logo_og: settings.school_logo_og,
+                logo_size: settings.logo_size || 48,
+                updated_at: new Date().toISOString()
+            };
+
             let error;
             if (existing) {
                 const { error: updateError } = await supabase
                     .from('settings')
-                    .update({
-                        school_name: settings.school_name,
-                        school_description: settings.school_description,
-                        school_logo_url: settings.school_logo_url,
-                        updated_at: new Date().toISOString()
-                    })
+                    .update(settingsData)
                     .eq('id', existing.id);
                 error = updateError;
             } else {
                 const { error: insertError } = await supabase
                     .from('settings')
-                    .insert([{
-                        school_name: settings.school_name,
-                        school_description: settings.school_description,
-                        school_logo_url: settings.school_logo_url
-                    }]);
+                    .insert([settingsData]);
                 error = insertError;
             }
 
@@ -203,7 +249,7 @@ export const SettingsPanel = () => {
                         <label className="block text-sm font-semibold text-gray-600 mb-2 pl-2">Logo</label>
                         <div className="flex items-center gap-4">
                             {settings.school_logo_url && (
-                                <div className="w-16 h-16 rounded-xl bg-[#e0e5ec] shadow-[inset_3px_3px_6px_rgba(163,177,198,0.5),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] p-2 flex items-center justify-center">
+                                <div className="w-20 h-20 rounded-xl bg-[#e0e5ec] shadow-[8px_8px_16px_rgba(163,177,198,0.6),-8px_-8px_16px_rgba(255,255,255,0.8)] p-3 flex items-center justify-center hover:shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] transition-all duration-300">
                                     <img
                                         src={settings.school_logo_url}
                                         alt="School Logo"
@@ -212,21 +258,74 @@ export const SettingsPanel = () => {
                                 </div>
                             )}
                             <div className="flex-1">
-                                <label className="neo-btn cursor-pointer inline-flex items-center gap-2 text-sm text-gray-600 px-4 py-2">
-                                    <span>📤 Upload Logo</span>
+                                <label className="neo-btn cursor-pointer inline-flex items-center gap-2 text-sm text-gray-600 px-4 py-2 hover:scale-105 transition-transform">
+                                    <span>📤 {uploadProgress ? 'Uploading...' : 'Upload Logo'}</span>
                                     <input
                                         type="file"
                                         accept="image/*"
                                         className="hidden"
                                         onChange={handleLogoUpload}
+                                        disabled={saving}
                                     />
                                 </label>
-                                <p className="text-xs text-gray-400 mt-2 pl-2">
-                                    Upload a PNG or JPG file. Recommended size: 200x200px.
-                                </p>
+                                {uploadProgress && (
+                                    <p className="text-xs text-blue-500 mt-2 pl-2 font-medium animate-pulse">
+                                        {uploadProgress}
+                                    </p>
+                                )}
+                                {!uploadProgress && (
+                                    <p className="text-xs text-gray-400 mt-2 pl-2">
+                                        Upload PNG, JPG, or SVG. Best: 512x512px square. Will auto-generate favicons & OG images.
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
+
+                    {/* Logo Size Adjustment */}
+                    {settings.school_logo_url && (
+                        <div className="border-t border-gray-200/50 pt-6">
+                            <label className="block text-sm font-semibold text-gray-600 mb-4 pl-2">Logo Size (for Navigation)</label>
+                            <div className="flex items-center gap-6">
+                                <div className="flex-1 space-y-4">
+                                    <input
+                                        type="range"
+                                        min="32"
+                                        max="80"
+                                        value={settings.logo_size || 48}
+                                        onChange={(e) => setSettings({ ...settings, logo_size: parseInt(e.target.value) })}
+                                        className="w-full h-2 bg-[#e0e5ec] rounded-full appearance-none cursor-pointer shadow-[inset_3px_3px_6px_rgba(163,177,198,0.5),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] outline-none"
+                                        style={{
+                                            background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${((settings.logo_size || 48) - 32) / 48 * 100}%, #e0e5ec ${((settings.logo_size || 48) - 32) / 48 * 100}%, #e0e5ec 100%)`
+                                        }}
+                                    />
+                                    <div className="flex justify-between text-xs text-gray-400 px-2">
+                                        <span>Small (32px)</span>
+                                        <span className="font-semibold text-blue-500">{settings.logo_size || 48}px</span>
+                                        <span>Large (80px)</span>
+                                    </div>
+                                </div>
+
+                                {/* Live Preview */}
+                                <div className="flex items-center gap-4 px-6 py-4 rounded-2xl bg-[#e0e5ec] shadow-[inset_3px_3px_6px_rgba(163,177,198,0.4),inset_-3px_-3px_6px_rgba(255,255,255,0.7)]">
+                                    <span className="text-xs text-gray-500 font-medium">Preview:</span>
+                                    <div
+                                        className="rounded-xl bg-[#e0e5ec] shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.8)] p-2 flex items-center justify-center transition-all duration-200"
+                                        style={{
+                                            width: `${settings.logo_size || 48}px`,
+                                            height: `${settings.logo_size || 48}px`
+                                        }}
+                                    >
+                                        <img
+                                            src={settings.school_logo_url}
+                                            alt="Logo Preview"
+                                            className="max-w-full max-h-full object-contain"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="flex items-center justify-between pt-4">
                         <p className={`text-sm font-medium ${message.includes("Error") ? "text-red-500" : "text-green-500"}`}>{message}</p>
