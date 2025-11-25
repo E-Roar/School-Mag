@@ -141,10 +141,10 @@ const Page = ({
         map: picture,
         ...(isCover
           ? {
-            roughness: 0.2,
+            roughness: 0.5,
           }
           : {
-            roughness: 0.1,
+            roughness: 0.4,
           }),
         emissive: emissiveColor,
         emissiveIntensity: 0,
@@ -152,7 +152,7 @@ const Page = ({
       new MeshStandardMaterial({
         color: whiteColor,
         map: picture2,
-        roughness: 0.1,
+        roughness: 0.4,
         emissive: emissiveColor,
         emissiveIntensity: 0,
       }),
@@ -175,14 +175,14 @@ const Page = ({
 
     if (isCover) {
       frontMaterial.roughnessMap = null;
-      frontMaterial.roughness = 0.2;
+      frontMaterial.roughness = 0.5;
     } else {
       frontMaterial.roughnessMap = null;
-      frontMaterial.roughness = 0.1;
+      frontMaterial.roughness = 0.4;
     }
 
     backMaterial.roughnessMap = null;
-    backMaterial.roughness = 0.1;
+    backMaterial.roughness = 0.4;
 
     frontMaterial.needsUpdate = true;
     backMaterial.needsUpdate = true;
