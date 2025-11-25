@@ -13,6 +13,7 @@ import {
   defaultVisualSettings,
 } from "../data/defaultBooks";
 import { hydrateBook, withVisualDefaults } from "../utils/bookUtils";
+import { logActivity } from "../lib/logger";
 
 const BookDataContext = createContext();
 
@@ -113,6 +114,8 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
             .eq("page_number", pageNumber);
 
           if (error) throw error;
+
+          logActivity("Updated Page Image (URL)", { bookId, pageNumber, side, path });
         }
         return { bookId, pageIndex, side, url: file };
       }
@@ -146,6 +149,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
             throw new Error(`Failed to update page in database: ${error.message}`);
           }
 
+          logActivity("Uploaded Page Image", { bookId, pageNumber, side });
           return { bookId, pageIndex, side, url };
         } catch (error) {
           console.error('Upload error:', error);
@@ -234,6 +238,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
 
         if (error) throw error;
 
+        logActivity("Added Page", { bookId, pageNumber: nextPageNumber });
         return { bookId, newPage: data };
       }
 
@@ -311,6 +316,8 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
           .eq("page_number", pageNumber);
 
         if (deleteError) throw deleteError;
+
+        logActivity("Removed Page", { bookId, pageNumber });
       }
       return { bookId, pageIndex };
     },
@@ -352,6 +359,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
         if (!book) return;
         const nextVisual = withVisualDefaults({ ...book.visualSettings, ...changes });
         await supabase.from("books").update({ visual_settings: nextVisual }).eq("id", bookId);
+        logActivity("Updated Visual Settings", { bookId });
         return { bookId, visualSettings: nextVisual };
       }
       return { bookId, visualSettings: changes };
@@ -383,6 +391,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
           is_published: changes.is_published
         };
         await supabase.from("books").update(updateData).eq("id", bookId);
+        logActivity("Updated Book Meta", { bookId, changes });
       }
       return { bookId, changes };
     },
@@ -432,6 +441,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
 
       // Removed automatic Back Cover creation as per user request
 
+      logActivity("Created New Issue", { bookId: data.id, title: newBook.title });
       return hydrateBook(data);
     },
     onSuccess: (newBook) => {
@@ -459,6 +469,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
       if (!isSupabaseConfigured || !supabase) return;
       const { error } = await supabase.from("books").delete().eq("id", bookId);
       if (error) throw error;
+      logActivity("Deleted Issue", { bookId });
       return bookId;
     },
     onSuccess: (deletedBookId) => {
@@ -517,6 +528,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
 
       if (deleteError) throw deleteError;
 
+      logActivity("Cleaned Up Empty Issues", { count: idsToDelete.length });
       return { count: idsToDelete.length };
     },
     onSuccess: ({ count }) => {
@@ -534,6 +546,73 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
 
   const cleanupEmptyBooks = () => cleanupEmptyBooksMutation.mutate();
 
+  const importPdfPages = async (bookId, files) => {
+    if (!isSupabaseConfigured || !supabase) return;
+
+    try {
+      // 1. Get current max page number
+      const { data: maxPageData, error: queryError } = await supabase
+        .from("pages")
+        .select("page_number")
+        .eq("book_id", bookId)
+        .order("page_number", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (queryError && queryError.code !== 'PGRST116') throw queryError;
+
+      let nextPageNumber = (maxPageData?.page_number ?? 0) + 1;
+
+      // 2. Loop through files in pairs
+      for (let i = 0; i < files.length; i += 2) {
+        const frontFile = files[i];
+        const backFile = files[i + 1]; // might be undefined
+
+        // Create new page entry
+        const { data: newPage, error } = await supabase
+          .from("pages")
+          .insert({
+            book_id: bookId,
+            page_number: nextPageNumber,
+            label: `Spread ${nextPageNumber}`,
+            front_asset_path: null,
+            back_asset_path: null
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Upload Front
+        if (frontFile) {
+          const url = await uploadPageImage(frontFile, bookId, nextPageNumber, 'front');
+          if (url && !url.includes('blob:')) {
+            const path = `${bookId}/${nextPageNumber}-front.webp`;
+            await supabase.from("pages").update({ front_asset_path: path }).eq("id", newPage.id);
+          }
+        }
+
+        // Upload Back
+        if (backFile) {
+          const url = await uploadPageImage(backFile, bookId, nextPageNumber, 'back');
+          if (url && !url.includes('blob:')) {
+            const path = `${bookId}/${nextPageNumber}-back.webp`;
+            await supabase.from("pages").update({ back_asset_path: path }).eq("id", newPage.id);
+          }
+        }
+
+        nextPageNumber++;
+      }
+
+      logActivity("Imported PDF Pages", { bookId, count: files.length });
+      queryClient.invalidateQueries({ queryKey: ["books"] });
+      return { success: true };
+    } catch (error) {
+      console.error("Error importing PDF pages:", error);
+      throw error;
+    }
+  };
+
   const value = {
     books,
     selectedBook,
@@ -547,7 +626,10 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
     refetch,
     createNewBook,
     deleteBook,
-    cleanupEmptyBooks
+    createNewBook,
+    deleteBook,
+    cleanupEmptyBooks,
+    importPdfPages
   };
 
   return (

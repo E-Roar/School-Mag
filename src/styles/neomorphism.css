@@ -1,0 +1,164 @@
+:root {
+    --neo-bg: #e0e5ec;
+    --neo-text: #4a5568;
+    --neo-text-light: #a0aec0;
+    --neo-accent: #3182ce;
+    /* Sci-fi Blue */
+    --neo-accent-glow: rgba(49, 130, 206, 0.5);
+
+    --neo-shadow-light: -9px -9px 16px rgba(255, 255, 255, 0.8);
+    --neo-shadow-dark: 9px 9px 16px rgba(163, 177, 198, 0.6);
+
+    --neo-shadow-inset-light: inset -6px -6px 10px rgba(255, 255, 255, 0.8);
+    --neo-shadow-inset-dark: inset 6px 6px 10px rgba(163, 177, 198, 0.7);
+}
+
+body {
+    background-color: var(--neo-bg);
+    color: var(--neo-text);
+}
+
+/* Base Layout */
+.neo-page {
+    min-height: 100vh;
+    background-color: var(--neo-bg);
+    transition: background-color 0.3s ease;
+}
+
+/* Neomorphic Card */
+.neo-card {
+    background: var(--neo-bg);
+    box-shadow: var(--neo-shadow-dark), var(--neo-shadow-light);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.neo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 12px 12px 20px rgba(163, 177, 198, 0.7), -12px -12px 20px rgba(255, 255, 255, 0.9);
+}
+
+/* Neomorphic Button */
+.neo-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    background: var(--neo-bg);
+    color: var(--neo-accent);
+    font-weight: 600;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    box-shadow: var(--neo-shadow-dark), var(--neo-shadow-light);
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.875rem;
+}
+
+.neo-btn:hover {
+    color: var(--neo-accent);
+    transform: translateY(-1px);
+    box-shadow: 11px 11px 18px rgba(163, 177, 198, 0.65), -11px -11px 18px rgba(255, 255, 255, 0.85);
+}
+
+.neo-btn:active {
+    transform: translateY(1px);
+    box-shadow: var(--neo-shadow-inset-dark), var(--neo-shadow-inset-light);
+}
+
+.neo-btn-primary {
+    background: var(--neo-bg);
+    /* Keep bg same for true neomorphism, use text color/glow for accent */
+    color: var(--neo-accent);
+    text-shadow: 0 0 10px var(--neo-accent-glow);
+}
+
+/* Neomorphic Input */
+.neo-input {
+    width: 100%;
+    padding: 0.75rem 1.25rem;
+    background: var(--neo-bg);
+    border: none;
+    border-radius: 50px;
+    box-shadow: var(--neo-shadow-inset-dark), var(--neo-shadow-inset-light);
+    color: var(--neo-text);
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.neo-input:focus {
+    box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.9), 0 0 5px var(--neo-accent-glow);
+}
+
+/* Image Container (Frame) */
+.neo-frame {
+    padding: 10px;
+    background: var(--neo-bg);
+    border-radius: 20px;
+    box-shadow: var(--neo-shadow-dark), var(--neo-shadow-light);
+}
+
+.neo-frame img {
+    border-radius: 12px;
+    display: block;
+}
+
+/* Typography & Accents */
+.text-neo-accent {
+    color: var(--neo-accent);
+    text-shadow: 0 0 15px var(--neo-accent-glow);
+}
+
+.neo-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--neo-bg);
+    color: var(--neo-accent);
+    box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.5), -3px -3px 6px rgba(255, 255, 255, 0.7);
+}
+
+/* Animations */
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+
+/* Grid Layouts */
+.neo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .neo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        /* Smaller cards on mobile */
+        gap: 1.5rem;
+    }
+
+    .neo-card {
+        border-radius: 15px;
+    }
+}

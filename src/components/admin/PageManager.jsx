@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useBookData } from "../../context/BookDataContext";
+import { convertPdfToImages } from "../../lib/pdfUtils";
 
 const PageCard = ({ index, page, bookId, updatePageImage, removePage, canRemove }) => {
     const [frontUrl, setFrontUrl] = useState("");
@@ -20,16 +21,16 @@ const PageCard = ({ index, page, bookId, updatePageImage, removePage, canRemove 
     };
 
     return (
-        <div className="glass-card p-4 space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+        <div className="neo-card p-4 space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-200/50 pb-2">
                 <div>
-                    <h4 className="font-bold text-gray-800">Page {index}</h4>
-                    <p className="text-xs text-gray-500 uppercase tracking-wider">{page.label}</p>
+                    <h4 className="font-bold text-gray-700">Page {index}</h4>
+                    <p className="text-xs text-gray-400 uppercase tracking-wider">{page.label}</p>
                 </div>
                 {canRemove && (
                     <button
                         onClick={() => removePage(bookId, index)}
-                        className="text-xs text-red-500 hover:bg-red-50 px-3 py-1 rounded-full transition-colors border border-red-100"
+                        className="text-xs text-red-500 hover:text-red-700 px-3 py-1 rounded-full transition-colors shadow-[3px_3px_6px_rgba(163,177,198,0.5),-3px_-3px_6px_rgba(255,255,255,0.8)] hover:shadow-[inset_2px_2px_5px_rgba(163,177,198,0.5),inset_-2px_-2px_5px_rgba(255,255,255,0.8)]"
                     >
                         Remove
                     </button>
@@ -39,15 +40,15 @@ const PageCard = ({ index, page, bookId, updatePageImage, removePage, canRemove 
             <div className="grid grid-cols-2 gap-4">
                 {/* Front Side */}
                 <div className="space-y-3">
-                    <p className="text-xs font-semibold text-gray-500 uppercase text-center">Front</p>
-                    <div className="aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 relative group">
+                    <p className="text-xs font-semibold text-gray-400 uppercase text-center">Front</p>
+                    <div className="aspect-[3/4] bg-[#e0e5ec] rounded-xl overflow-hidden shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] relative group">
                         <img
                             src={page.frontSrc}
                             alt={`Page ${index} Front`}
                             className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <label className="cursor-pointer bg-white text-black px-4 py-2 rounded-full text-xs font-bold hover:scale-105 transition-transform">
+                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                            <label className="cursor-pointer neo-btn text-xs px-4 py-2 hover:scale-105 transition-transform">
                                 Change Image
                                 <input type="file" className="hidden" accept="image/*" onChange={(e) => handleUpload(e, "front")} />
                             </label>
@@ -59,11 +60,11 @@ const PageCard = ({ index, page, bookId, updatePageImage, removePage, canRemove 
                             value={frontUrl}
                             onChange={(e) => setFrontUrl(e.target.value)}
                             placeholder="Or paste URL"
-                            className="glass-input py-1 text-xs"
+                            className="neo-input py-1 text-xs"
                         />
                         <button
                             onClick={() => handleUrlSubmit("front")}
-                            className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-medium"
+                            className="px-3 py-1 text-xs font-medium text-gray-600 neo-btn"
                         >
                             Use
                         </button>
@@ -72,15 +73,15 @@ const PageCard = ({ index, page, bookId, updatePageImage, removePage, canRemove 
 
                 {/* Back Side */}
                 <div className="space-y-3">
-                    <p className="text-xs font-semibold text-gray-500 uppercase text-center">Back</p>
-                    <div className="aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 relative group">
+                    <p className="text-xs font-semibold text-gray-400 uppercase text-center">Back</p>
+                    <div className="aspect-[3/4] bg-[#e0e5ec] rounded-xl overflow-hidden shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] relative group">
                         <img
                             src={page.backSrc}
                             alt={`Page ${index} Back`}
                             className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <label className="cursor-pointer bg-white text-black px-4 py-2 rounded-full text-xs font-bold hover:scale-105 transition-transform">
+                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                            <label className="cursor-pointer neo-btn text-xs px-4 py-2 hover:scale-105 transition-transform">
                                 Change Image
                                 <input type="file" className="hidden" accept="image/*" onChange={(e) => handleUpload(e, "back")} />
                             </label>
@@ -92,11 +93,11 @@ const PageCard = ({ index, page, bookId, updatePageImage, removePage, canRemove 
                             value={backUrl}
                             onChange={(e) => setBackUrl(e.target.value)}
                             placeholder="Or paste URL"
-                            className="glass-input py-1 text-xs"
+                            className="neo-input py-1 text-xs"
                         />
                         <button
                             onClick={() => handleUrlSubmit("back")}
-                            className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-medium"
+                            className="px-3 py-1 text-xs font-medium text-gray-600 neo-btn"
                         >
                             Use
                         </button>
@@ -108,24 +109,132 @@ const PageCard = ({ index, page, bookId, updatePageImage, removePage, canRemove 
 };
 
 export const PageManager = ({ book }) => {
-    const { updatePageImage, addPage, removePage } = useBookData();
+    const { updatePageImage, addPage, removePage, importPdfPages } = useBookData();
     const pages = book.pages || [];
+    const [bulkCount, setBulkCount] = useState(1);
+    const [isAdding, setIsAdding] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
+    const [importProgress, setImportProgress] = useState(null);
+
+    const handleBulkAdd = async () => {
+        if (bulkCount < 1 || bulkCount > 50) {
+            alert("Please enter a number between 1 and 50");
+            return;
+        }
+
+        setIsAdding(true);
+        for (let i = 0; i < bulkCount; i++) {
+            await addPage(book.id);
+            // Small delay to avoid overwhelming the database
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        setIsAdding(false);
+        setBulkCount(1);
+    };
+
+    const handlePdfUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsImporting(true);
+        try {
+            const images = await convertPdfToImages(file, (current, total) => {
+                setImportProgress(`Converting page ${current} of ${total}...`);
+            });
+
+            setImportProgress(`Uploading ${images.length} images...`);
+            await importPdfPages(book.id, images);
+
+            alert("PDF imported successfully!");
+        } catch (error) {
+            console.error(error);
+            alert("Failed to import PDF: " + error.message);
+        } finally {
+            setIsImporting(false);
+            setImportProgress(null);
+            e.target.value = "";
+        }
+    };
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            {/* Header with Bulk Add & PDF Import */}
+            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 p-5 neo-card">
                 <div>
-                    <h3 className="text-lg font-semibold text-gray-800">Pages & Spreads</h3>
-                    <p className="text-sm text-gray-500">{pages.length} pages total</p>
+                    <h3 className="text-lg font-bold text-gray-700">Pages & Spreads</h3>
+                    <p className="text-sm text-gray-500">
+                        <span className="font-bold text-blue-500">{pages.length}</span> pages total
+                    </p>
                 </div>
-                <button
-                    onClick={() => addPage(book.id)}
-                    className="glass-btn-primary px-4 py-2 text-sm flex items-center gap-2"
-                >
-                    <span>+</span> Add Spread
-                </button>
+
+                <div className="flex flex-wrap items-center gap-6">
+                    {/* PDF Import */}
+                    <div className="flex items-center gap-3 border-r border-gray-200 pr-6">
+                        <label className={`neo-btn px-5 py-2.5 text-sm flex items-center gap-2 text-purple-600 cursor-pointer ${isImporting ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                            {isImporting ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                                    {importProgress || "Importing..."}
+                                </>
+                            ) : (
+                                <>
+                                    <span className="text-lg">📄</span>
+                                    Import PDF
+                                    <input
+                                        type="file"
+                                        accept="application/pdf"
+                                        className="hidden"
+                                        onChange={handlePdfUpload}
+                                        disabled={isImporting}
+                                    />
+                                </>
+                            )}
+                        </label>
+                    </div>
+
+                    {/* Bulk Add */}
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                            <label className="text-sm font-medium text-gray-600 whitespace-nowrap">
+                                Add:
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                max="50"
+                                value={bulkCount}
+                                onChange={(e) => setBulkCount(parseInt(e.target.value) || 1)}
+                                className="w-20 px-3 py-2 rounded-full border-none shadow-[inset_2px_2px_5px_rgba(163,177,198,0.5),inset_-2px_-2px_5px_rgba(255,255,255,0.8)] bg-[#e0e5ec] text-center font-semibold text-gray-700 focus:outline-none focus:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.9)]"
+                                disabled={isAdding}
+                            />
+                            <span className="text-sm text-gray-500">
+                                {bulkCount === 1 ? 'spread' : 'spreads'}
+                            </span>
+                        </div>
+
+                        <button
+                            onClick={handleBulkAdd}
+                            disabled={isAdding}
+                            className={`neo-btn px-5 py-2.5 text-sm flex items-center gap-2 text-blue-600 ${isAdding ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
+                        >
+                            {isAdding ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                    Adding...
+                                </>
+                            ) : (
+                                <>
+                                    <span className="text-lg">+</span>
+                                    Add
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
             </div>
 
+            {/* Pages Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {pages.map((page, index) => {
                     const isCover = index === 0;

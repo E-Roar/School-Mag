@@ -4,41 +4,37 @@ export const Sidebar = () => {
     const { books, selectedBook, setActiveBookId, createNewBook, deleteBook, cleanupEmptyBooks } = useBookData();
 
     return (
-        <aside className="glass-sidebar flex flex-col">
-            <div className="p-6 border-b border-white/20">
-                <h2 className="text-xl font-bold text-gradient">Admin Panel</h2>
-                <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">Dashboard</p>
+        <aside className="w-80 bg-[#e0e5ec] flex flex-col border-r border-white/20 shadow-[9px_0_16px_rgba(163,177,198,0.4)] z-40">
+            <div className="p-6">
+                <h2 className="text-xl font-bold text-gray-700 tracking-tight">Library</h2>
+                <p className="text-xs text-gray-400 uppercase tracking-widest mt-1">Manage Issues</p>
             </div>
 
-            <div className="p-4">
+            <div className="px-4 pb-4">
                 <button
                     onClick={() => {
                         if (confirm("Create a new issue?")) {
                             createNewBook();
                         }
                     }}
-                    className="w-full glass-btn-primary py-2 text-sm flex items-center justify-center gap-2"
+                    className="neo-btn w-full text-blue-600 flex items-center justify-center gap-2"
                 >
                     <span>+</span> New Issue
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-2 space-y-1">
-                <p className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Issues ({books.length})
-                </p>
-
+            <div className="flex-1 overflow-y-auto px-4 space-y-3 pb-4">
                 {books.map((book) => (
                     <div
                         key={book.id}
-                        className={`group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${selectedBook?.id === book.id
-                                ? "bg-white/40 shadow-sm border border-white/40"
-                                : "hover:bg-white/20 border border-transparent"
+                        className={`group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-300 ${selectedBook?.id === book.id
+                                ? "shadow-[inset_5px_5px_10px_rgba(163,177,198,0.6),inset_-5px_-5px_10px_rgba(255,255,255,0.8)] text-blue-600"
+                                : "shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.8)] hover:transform hover:-translate-y-1"
                             }`}
                         onClick={() => setActiveBookId(book.id)}
                     >
                         <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0">
+                            <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 shadow-inner">
                                 <img
                                     src={book.pages?.[0]?.frontSrc || "/textures/DSC00933.jpg"}
                                     alt={book.title}
@@ -46,17 +42,17 @@ export const Sidebar = () => {
                                 />
                             </div>
                             <div className="min-w-0">
-                                <p className={`text-sm font-medium truncate ${selectedBook?.id === book.id ? "text-gray-900" : "text-gray-700"}`}>
+                                <p className={`text-sm font-bold truncate ${selectedBook?.id === book.id ? "text-blue-600" : "text-gray-700"}`}>
                                     {book.title}
                                 </p>
-                                <p className="text-xs text-gray-500 truncate">
+                                <p className="text-xs text-gray-400 truncate">
                                     {book.is_published ? "🟢 Published" : "Draft"}
                                 </p>
                             </div>
                         </div>
 
                         <button
-                            className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                            className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-red-500 hover:bg-[#e0e5ec] rounded-full shadow-[3px_3px_6px_rgba(163,177,198,0.6),-3px_-3px_6px_rgba(255,255,255,0.8)] transition-all"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 if (confirm(`Delete "${book.title}"?`)) {
@@ -81,13 +77,10 @@ export const Sidebar = () => {
                             cleanupEmptyBooks();
                         }
                     }}
-                    className="w-full py-2 text-xs text-red-500 hover:bg-red-50 rounded-lg border border-red-200 transition-colors"
+                    className="w-full py-2 text-xs text-red-400 hover:text-red-600 transition-colors"
                 >
                     Clean Empty Issues
                 </button>
-                <div className="text-xs text-center text-gray-400">
-                    v2.0.0 • E-Roar
-                </div>
             </div>
         </aside>
     );
