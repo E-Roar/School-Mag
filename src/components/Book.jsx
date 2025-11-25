@@ -108,7 +108,7 @@ const Page = ({
     : defaultTexture;
 
   const [picture, picture2] = useTexture([safeFrontSrc, safeBackSrc]);
-  const pictureRoughness = useTexture(`/textures/book-cover-roughness.jpg`);
+  // const pictureRoughness = useTexture(`/textures/book-cover-roughness.jpg`);
   picture.colorSpace = picture2.colorSpace = SRGBColorSpace;
   const group = useRef();
   const turnedAt = useRef(0);
@@ -141,7 +141,7 @@ const Page = ({
         map: picture,
         ...(isCover
           ? {
-            roughnessMap: pictureRoughness,
+            roughness: 0.2,
           }
           : {
             roughness: 0.1,
@@ -174,8 +174,8 @@ const Page = ({
     backMaterial.map = picture2;
 
     if (isCover) {
-      frontMaterial.roughnessMap = pictureRoughness;
-      frontMaterial.roughness = undefined;
+      frontMaterial.roughnessMap = null;
+      frontMaterial.roughness = 0.2;
     } else {
       frontMaterial.roughnessMap = null;
       frontMaterial.roughness = 0.1;
@@ -186,7 +186,7 @@ const Page = ({
 
     frontMaterial.needsUpdate = true;
     backMaterial.needsUpdate = true;
-  }, [isCover, manualSkinnedMesh, picture, picture2, pictureRoughness]);
+  }, [isCover, manualSkinnedMesh, picture, picture2]);
 
   // useHelper(skinnedMeshRef, SkeletonHelper, "red");
 
@@ -311,7 +311,7 @@ export const Book = ({ ...props }) => {
         useTexture.preload(pageData.backSrc);
       }
     });
-    useTexture.preload(`/textures/book-cover-roughness.jpg`);
+    // useTexture.preload(`/textures/book-cover-roughness.jpg`);
   }, [pages]);
 
   useEffect(() => {
