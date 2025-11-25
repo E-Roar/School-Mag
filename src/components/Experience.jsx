@@ -2,6 +2,10 @@ import { Environment, Float, OrbitControls } from "@react-three/drei";
 import { Book } from "./Book";
 import { useBookData } from "../context/BookDataContext";
 
+/**
+ * Experience – sets up the 3D scene for the book viewer.
+ * Includes floating animation, camera controls, and lighting.
+ */
 export const Experience = () => {
   const { selectedBook } = useBookData();
   const visualSettings = selectedBook?.visualSettings || {};
@@ -11,6 +15,7 @@ export const Experience = () => {
 
   return (
     <>
+      {/* Book with floating animation */}
       <Float
         rotation-x={-Math.PI / 4}
         floatIntensity={floatIntensity}
@@ -19,8 +24,14 @@ export const Experience = () => {
       >
         <Book />
       </Float>
+
+      {/* Camera controls */}
       <OrbitControls />
-      <Environment preset="studio"></Environment>
+
+      {/* Environment lighting */}
+      <Environment preset="studio" />
+
+      {/* Directional light */}
       <directionalLight
         position={[2, 5, 2]}
         intensity={2.5}
@@ -29,6 +40,8 @@ export const Experience = () => {
         shadow-mapSize-height={2048}
         shadow-bias={-0.0001}
       />
+
+      {/* Ground plane to catch shadows */}
       <mesh position-y={-1.5} rotation-x={-Math.PI / 2} receiveShadow>
         <planeGeometry args={[100, 100]} />
         <shadowMaterial transparent opacity={0.2} />
