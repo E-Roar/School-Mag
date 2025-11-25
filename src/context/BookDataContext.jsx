@@ -217,11 +217,12 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
           .eq("book_id", bookId)
           .order("page_number", { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle(); // Use maybeSingle() - returns null if no rows
 
-        if (queryError && queryError.code !== 'PGRST116') throw queryError; // PGRST116 is "no rows found"
+        if (queryError) throw queryError;
 
-        const nextPageNumber = (maxPageData?.page_number ?? 0) + 1;
+        // If book has 0 pages, start from 0, otherwise increment from max
+        const nextPageNumber = maxPageData?.page_number !== undefined ? maxPageData.page_number + 1 : 0;
 
         // 2. Insert the new page at the end
         const { data, error } = await supabase
@@ -549,9 +550,9 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
         .eq("book_id", bookId)
         .order("page_number", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle(); // Use maybeSingle() instead of single() - returns null if no rows
 
-      if (queryError && queryError.code !== 'PGRST116') throw queryError;
+      if (queryError) throw queryError;
 
       // If book has 0 pages, start from 0, otherwise start from max + 1
       let nextPageNumber = maxPageData?.page_number !== undefined ? maxPageData.page_number + 1 : 0;
