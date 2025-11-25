@@ -25,7 +25,7 @@ export const LandingPage = () => {
                 const { data } = await supabase
                     .from('settings')
                     .select('*')
-                    .single();
+                    .maybeSingle();
                 if (data) {
                     setSettings(data);
                     if (data.school_name) {

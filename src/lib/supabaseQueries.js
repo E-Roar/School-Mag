@@ -198,9 +198,10 @@ export const fetchBookById = async (bookId) => {
       .from('books')
       .select('*')
       .eq('id', bookId)
-      .single()
+      .maybeSingle()
 
     if (bookError) throw bookError
+    if (!book) return null // Handle case where book is not found
 
     const { data: pages, error: pagesError } = await supabase
       .from('pages')

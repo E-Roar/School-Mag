@@ -37,7 +37,7 @@ export const SettingsPanel = () => {
             const { data, error } = await supabase
                 .from('settings')
                 .select('*')
-                .single();
+                .maybeSingle();
 
             if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "no rows returned"
 
@@ -130,7 +130,7 @@ export const SettingsPanel = () => {
         setMessage("");
         try {
             // Check if row exists
-            const { data: existing } = await supabase.from('settings').select('id').single();
+            const { data: existing } = await supabase.from('settings').select('id').maybeSingle();
 
             const settingsData = {
                 school_name: settings.school_name,

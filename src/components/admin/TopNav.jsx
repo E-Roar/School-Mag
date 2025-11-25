@@ -19,7 +19,7 @@ export const TopNav = ({ currentView, onViewChange }) => {
                 const { data } = await supabase
                     .from('settings')
                     .select('school_logo_url, school_name')
-                    .single();
+                    .maybeSingle();
                 if (data) {
                     // Set default logo_size if not in database yet
                     setSettings({
@@ -66,8 +66,8 @@ export const TopNav = ({ currentView, onViewChange }) => {
                             key={item.id}
                             onClick={() => onViewChange(item.id)}
                             className={`px-4 md:px-6 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${currentView === item.id
-                                    ? "text-blue-500 shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.8)] transform scale-105"
-                                    : "text-gray-500 hover:text-gray-700"
+                                ? "text-blue-500 shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.8)] transform scale-105"
+                                : "text-gray-500 hover:text-gray-700"
                                 }`}
                         >
                             {item.label}
