@@ -1,12 +1,17 @@
 import { useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { SceneLayout } from "../components/SceneLayout";
 import { BookDataProvider, useBookData } from "../context/BookDataContext";
 import { UI } from "../components/UI";
+import { TopNav } from "../components/TopNav";
+import { useBookAnalytics } from "../hooks/useBookAnalytics";
 
 const ViewerContent = () => {
     const { issueId } = useParams();
     const { books, setActiveBookId, selectedBook } = useBookData();
+
+    // Initialize analytics tracking
+    const analytics = useBookAnalytics(issueId);
 
     useEffect(() => {
         if (issueId && books.length > 0) {
@@ -23,18 +28,12 @@ const ViewerContent = () => {
     }
 
     return (
-        <SceneLayout>
-            <UI />
-            {/* Back Button */}
-            <Link
-                to="/"
-                className="fixed top-6 left-6 z-50 glass-btn-icon text-black hover:scale-110 transition-transform"
-                title="Back to Library"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                </svg>
-            </Link>
+        <SceneLayout analytics={analytics}>
+            {/* Top Navigation with Like Button */}
+            <TopNav bookId={selectedBook.id} bookTitle={selectedBook.title} />
+
+            {/* Bottom Navigation */}
+            <UI analytics={analytics} />
         </SceneLayout>
     );
 };

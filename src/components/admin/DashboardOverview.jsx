@@ -3,7 +3,7 @@ import { useBookData } from "../../context/BookDataContext";
 import { supabase } from "../../lib/supabaseClient";
 import { fetchPlatformStats, fetchBookAnalytics as fetchBookAnalyticsQuery } from "../../lib/analyticsQueries";
 import { generateMockAnalytics, generateMockBookAnalytics } from "../../lib/mockAnalytics";
-import { LineChart, DonutChart, StatCard, BarChart } from "./Charts";
+import { LineChart, DonutChart, StatCard, BarChart, Heatmap } from "./Charts";
 import { DemoDataNotice } from "./DemoDataNotice";
 
 export const DashboardOverview = () => {
@@ -178,6 +178,17 @@ export const DashboardOverview = () => {
                 </h1>
 
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => {
+                            fetchLogs();
+                            fetchAnalytics();
+                            if (selectedBookId) fetchBookAnalytics();
+                        }}
+                        className="neo-btn text-xs px-3 py-2 text-gray-600 hover:text-blue-600 mr-2"
+                        title="Refresh Data"
+                    >
+                        🔄
+                    </button>
                     {[7, 30, 90].map(days => (
                         <button
                             key={days}
@@ -228,7 +239,7 @@ export const DashboardOverview = () => {
                     {bookAnalytics && selectedBook ? (
                         <div className="space-y-6">
                             {/* Book Metrics */}
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                                 <div className="neo-card p-4 text-center">
                                     <div className="text-2xl mb-1">👁️</div>
                                     <div className="text-2xl font-bold text-gray-700">
@@ -244,6 +255,13 @@ export const DashboardOverview = () => {
                                     <div className="text-xs text-gray-500 uppercase">Unique Users</div>
                                 </div>
                                 <div className="neo-card p-4 text-center">
+                                    <div className="text-2xl mb-1">❤️</div>
+                                    <div className="text-2xl font-bold text-gray-700">
+                                        {bookAnalytics.totalLikes || 0}
+                                    </div>
+                                    <div className="text-xs text-gray-500 uppercase">Total Likes</div>
+                                </div>
+                                <div className="neo-card p-4 text-center">
                                     <div className="text-2xl mb-1">⏱️</div>
                                     <div className="text-2xl font-bold text-gray-700">
                                         {Math.floor(bookAnalytics.avgSessionDuration / 60)}m
@@ -253,9 +271,16 @@ export const DashboardOverview = () => {
                                 <div className="neo-card p-4 text-center">
                                     <div className="text-2xl mb-1">📄</div>
                                     <div className="text-2xl font-bold text-gray-700">
-                                        {selectedBook.pages?.length || 0}
+                                        {bookAnalytics.totalPages || selectedBook.pages?.length || 0}
                                     </div>
                                     <div className="text-xs text-gray-500 uppercase">Total Pages</div>
+                                </div>
+                                <div className="neo-card p-4 text-center">
+                                    <div className="text-2xl mb-1">👆</div>
+                                    <div className="text-2xl font-bold text-gray-700">
+                                        {bookAnalytics.pageStats.reduce((acc, p) => acc + p.clicks, 0).toLocaleString()}
+                                    </div>
+                                    <div className="text-xs text-gray-500 uppercase">Total Clicks</div>
                                 </div>
                             </div>
 
@@ -282,6 +307,25 @@ export const DashboardOverview = () => {
                                     />
                                 </div>
                             </div>
+
+                            {/* Heatmap Section */}
+                            {bookAnalytics.heatmapData && (
+                                <div className="neo-card p-6">
+                                    <h3 className="text-md font-bold text-gray-700 mb-4">Interaction Heatmap (Aggregate)</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <Heatmap
+                                            grid={bookAnalytics.heatmapData.clickGrid}
+                                            label="Click Density"
+                                            height={300}
+                                        />
+                                        <Heatmap
+                                            grid={bookAnalytics.heatmapData.hoverGrid}
+                                            label="Hover Density"
+                                            height={300}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ) : selectedBookId ? (
                         <div className="text-center py-8 text-gray-400">
@@ -387,7 +431,7 @@ export const DashboardOverview = () => {
                                 <h3 className="font-bold text-gray-700">Pro Feature</h3>
                             </div>
                             <p className="text-sm text-gray-600">
-                                Visit the Analytics tab for page-by-page insights and heatmaps showing exactly where users click and hover.
+                                Select an issue above to view detailed page-by-page insights and heatmaps showing exactly where users click and hover.
                             </p>
                         </div>
                     </div>

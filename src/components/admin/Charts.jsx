@@ -1,115 +1,43 @@
-/**
- * Simple Line Chart Component (No external dependencies)
- * For displaying trends over time
- */
-export const LineChart = ({ data, dataKey, xKey, height = 200, color = '#3b82f6' }) => {
-    if (!data || data.length === 0) {
+import React from 'react';
+import {
+    LineChart as RechartsLineChart,
+    Line,
+    BarChart as RechartsBarChart,
+    Bar,
+    PieChart,
+    Pie,
+    Cell,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    Area,
+    AreaChart,
+} from 'recharts';
+
+// Custom Tooltip Component for Neomorphic look
+const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
         return (
-            <div className="w-full flex items-center justify-center text-gray-400 text-sm" style={{ height }}>
-                No data available
+            <div className="bg-[#e0e5ec] p-3 rounded-xl shadow-[5px_5px_10px_#b8b9be,-5px_-5px_10px_#ffffff] border border-white/20">
+                <p className="text-gray-700 font-bold text-sm mb-1">{label}</p>
+                {payload.map((entry, index) => (
+                    <p key={index} className="text-xs font-medium" style={{ color: entry.color }}>
+                        {entry.name}: {entry.value.toLocaleString()}
+                    </p>
+                ))}
             </div>
         );
     }
-
-    const values = data.map(d => d[dataKey] || 0);
-    const max = Math.max(...values, 1);
-    const min = Math.min(...values, 0);
-    const range = max - min || 1;
-
-    const width = 100; // percentage
-    const padding = 10;
-    const graphHeight = height - padding * 2;
-
-    // Calculate points with safety checks
-    const points = data.map((d, i) => {
-        const x = data.length > 1 ? (i / (data.length - 1)) * width : width / 2;
-        const value = d[dataKey] || 0;
-        const y = graphHeight - ((value - min) / range) * graphHeight;
-        return `${x},${y + padding}`;
-    }).join(' ');
-
-    // Ensure we have valid points
-    if (!points || points.includes('NaN')) {
-        return (
-            <div className="w-full flex items-center justify-center text-gray-400 text-sm" style={{ height }}>
-                Invalid data
-            </div>
-        );
-    }
-
-    return (
-        <div className="w-full relative" style={{ height }}>
-            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full">
-                {/* Grid lines */}
-                <g className="opacity-20">
-                    {[0, 25, 50, 75, 100].map(y => (
-                        <line
-                            key={y}
-                            x1="0"
-                            x2={width}
-                            y1={y * height / 100}
-                            y2={y * height / 100}
-                            stroke="#94a3b8"
-                            strokeWidth="0.5"
-                        />
-                    ))}
-                </g>
-
-                {/* Line */}
-                <polyline
-                    points={points}
-                    fill="none"
-                    stroke={color}
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                />
-
-                {/* Area fill */}
-                <polyline
-                    points={`0,${height} ${points} ${width},${height}`}
-                    fill={color}
-                    fillOpacity="0.1"
-                />
-
-                {/* Data points */}
-                {points.split(' ').map((point, i) => {
-                    const [x, y] = point.split(',').map(Number);
-                    if (isNaN(x) || isNaN(y)) return null;
-                    return (
-                        <circle
-                            key={i}
-                            cx={x}
-                            cy={y}
-                            r="2"
-                            fill={color}
-                        />
-                    );
-                })}
-            </svg>
-
-            {/* Labels */}
-            <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-400 px-2">
-                {data.length > 0 && (
-                    <>
-                        <span>{data[0][xKey]}</span>
-                        <span>{data[data.length - 1][xKey]}</span>
-                    </>
-                )}
-            </div>
-
-            <div className="absolute top-0 right-0 text-xs text-gray-500 font-bold">
-                Max: {max.toLocaleString()}
-            </div>
-        </div>
-    );
+    return null;
 };
 
 /**
- * Bar Chart Component
- * For comparing values across categories
+ * Elegant Area/Line Chart
+ * Uses a gradient fill for a modern look
  */
-export const BarChart = ({ data, valueKey, labelKey, height = 200, color = '#10b981' }) => {
+export const LineChart = ({ data, dataKey, xKey, height = 300, color = '#3b82f6' }) => {
     if (!data || data.length === 0) {
         return (
             <div className="w-full flex items-center justify-center text-gray-400 text-sm" style={{ height }}>
@@ -117,121 +45,147 @@ export const BarChart = ({ data, valueKey, labelKey, height = 200, color = '#10b
             </div>
         );
     }
-
-    const values = data.map(d => d[valueKey] || 0);
-    const max = Math.max(...values, 1);
 
     return (
         <div className="w-full" style={{ height }}>
-            <div className="h-full flex items-end gap-2 px-4">
-                {data.map((item, i) => {
-                    const barHeight = (item[valueKey] / max) * (height - 40);
-                    return (
-                        <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                            <div className="text-xs font-bold text-gray-600 text-center">
-                                {item[valueKey].toLocaleString()}
-                            </div>
-                            <div
-                                className="w-full rounded-t-lg transition-all duration-300 hover:opacity-80"
-                                style={{
-                                    height: `${barHeight}px`,
-                                    backgroundColor: color
-                                }}
-                            />
-                            <div className="text-xs text-gray-400 text-center truncate w-full">
-                                {item[labelKey]}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
+            <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                        <linearGradient id={`color${dataKey}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={color} stopOpacity={0.3} />
+                            <stop offset="95%" stopColor={color} stopOpacity={0} />
+                        </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
+                    <XAxis
+                        dataKey={xKey}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#64748b', fontSize: 12 }}
+                        dy={10}
+                    />
+                    <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#64748b', fontSize: 12 }}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area
+                        type="monotone"
+                        dataKey={dataKey}
+                        stroke={color}
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill={`url(#color${dataKey})`}
+                        animationDuration={1500}
+                    />
+                </AreaChart>
+            </ResponsiveContainer>
         </div>
     );
 };
 
 /**
- * Donut Chart Component
- * For showing proportions
+ * Modern Bar Chart
+ * Rounded bars with subtle animation
  */
-export const DonutChart = ({ data, size = 120, thickness = 20 }) => {
+export const BarChart = ({ data, valueKey, labelKey, height = 300, color = '#10b981' }) => {
     if (!data || data.length === 0) {
         return (
-            <div className="flex items-center justify-center text-gray-400 text-sm" style={{ width: size, height: size }}>
+            <div className="w-full flex items-center justify-center text-gray-400 text-sm" style={{ height }}>
+                No data available
+            </div>
+        );
+    }
+
+    return (
+        <div className="w-full" style={{ height }}>
+            <ResponsiveContainer width="100%" height="100%">
+                <RechartsBarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
+                    <XAxis
+                        dataKey={labelKey}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#64748b', fontSize: 12 }}
+                        dy={10}
+                    />
+                    <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#64748b', fontSize: 12 }}
+                    />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
+                    <Bar
+                        dataKey={valueKey}
+                        fill={color}
+                        radius={[6, 6, 0, 0]}
+                        animationDuration={1500}
+                        barSize={40}
+                    />
+                </RechartsBarChart>
+            </ResponsiveContainer>
+        </div>
+    );
+};
+
+/**
+ * Sleek Donut Chart
+ * With centered total and clean legend
+ */
+export const DonutChart = ({ data, size = 250, thickness = 60 }) => {
+    if (!data || data.length === 0) {
+        return (
+            <div className="flex items-center justify-center text-gray-400 text-sm" style={{ height: size }}>
                 No data
             </div>
         );
     }
 
     const total = data.reduce((sum, item) => sum + item.value, 0);
-    if (total === 0) {
-        return (
-            <div className="flex items-center justify-center text-gray-400 text-sm" style={{ width: size, height: size }}>
-                No data
-            </div>
-        );
-    }
-
-    const radius = size / 2;
-    let currentAngle = -90;
 
     return (
-        <div className="inline-flex flex-col items-center gap-3">
-            <svg width={size} height={size} className="transform -rotate-90">
-                <circle
-                    cx={radius}
-                    cy={radius}
-                    r={radius - thickness / 2}
-                    fill="none"
-                    stroke="#e5e7eb"
-                    strokeWidth={thickness}
-                />
+        <div className="w-full flex flex-col items-center">
+            <div style={{ width: '100%', height: size, position: 'relative' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Pie
+                            data={data}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={size / 2 - thickness}
+                            outerRadius={size / 2}
+                            paddingAngle={5}
+                            dataKey="value"
+                            nameKey="label"
+                            animationDuration={1500}
+                            stroke="none"
+                        >
+                            {data.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                        </Pie>
+                        <Tooltip content={<CustomTooltip />} />
+                    </PieChart>
+                </ResponsiveContainer>
 
-                {data.map((item, i) => {
-                    const percentage = (item.value / total) * 100;
-                    const angle = (percentage / 100) * 360;
-                    const startAngle = currentAngle;
-                    const endAngle = currentAngle + angle;
+                {/* Centered Total */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-3xl font-bold text-gray-700">{total.toLocaleString()}</span>
+                    <span className="text-xs text-gray-500 uppercase tracking-wider">Total</span>
+                </div>
+            </div>
 
-                    const startX = radius + (radius - thickness / 2) * Math.cos((startAngle * Math.PI) / 180);
-                    const startY = radius + (radius - thickness / 2) * Math.sin((startAngle * Math.PI) / 180);
-                    const endX = radius + (radius - thickness / 2) * Math.cos((endAngle * Math.PI) / 180);
-                    const endY = radius + (radius - thickness / 2) * Math.sin((endAngle * Math.PI) / 180);
-
-                    const largeArcFlag = angle > 180 ? 1 : 0;
-                    const path = `M ${startX} ${startY} A ${radius - thickness / 2} ${radius - thickness / 2} 0 ${largeArcFlag} 1 ${endX} ${endY}`;
-
-                    currentAngle += angle;
-
-                    return (
-                        <path
-                            key={i}
-                            d={path}
-                            fill="none"
-                            stroke={item.color}
-                            strokeWidth={thickness}
-                            strokeLinecap="round"
-                        />
-                    );
-                })}
-
-                <text
-                    x={radius}
-                    y={radius}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    className="fill-gray-700 font-bold text-sm"
-                    transform={`rotate(90, ${radius}, ${radius})`}
-                >
-                    {total.toLocaleString()}
-                </text>
-            </svg>
-
-            <div className="flex flex-wrap gap-3 justify-center">
+            {/* Custom Legend */}
+            <div className="flex flex-wrap gap-4 justify-center mt-4">
                 {data.map((item, i) => (
                     <div key={i} className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="text-xs text-gray-600">
-                            {item.label}: {((item.value / total) * 100).toFixed(1)}%
+                        <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: item.color }} />
+                        <span className="text-sm text-gray-600 font-medium">
+                            {item.label}
+                            <span className="text-gray-400 ml-1 text-xs">
+                                ({((item.value / total) * 100).toFixed(1)}%)
+                            </span>
                         </span>
                     </div>
                 ))}
@@ -241,10 +195,10 @@ export const DonutChart = ({ data, size = 120, thickness = 20 }) => {
 };
 
 /**
- * Heatmap Component
- * For visualizing interaction data
+ * Professional Heatmap
+ * Using SVG for precision but styled to match Recharts
  */
-export const Heatmap = ({ grid, width = 300, height = 400, label = 'Interactions' }) => {
+export const Heatmap = ({ grid, width = '100%', height = 300, label = 'Interactions' }) => {
     if (!grid || grid.length === 0) {
         return (
             <div className="neo-card p-6 flex items-center justify-center text-gray-400" style={{ width, height }}>
@@ -255,43 +209,52 @@ export const Heatmap = ({ grid, width = 300, height = 400, label = 'Interactions
 
     const rows = grid.length;
     const cols = grid[0]?.length || 0;
-    const cellWidth = width / cols;
-    const cellHeight = height / rows;
+    const cellWidth = 100 / cols;
+    const cellHeight = 100 / rows;
 
     const getHeatColor = (value) => {
-        if (value === 0) return 'rgba(229, 231, 235, 0.3)';
-        if (value < 0.2) return 'rgba(147, 197, 253, 0.4)';
-        if (value < 0.4) return 'rgba(96, 165, 250, 0.6)';
-        if (value < 0.6) return 'rgba(59, 130, 246, 0.7)';
-        if (value < 0.8) return 'rgba(37, 99, 235, 0.8)';
-        return 'rgba(29, 78, 216, 0.9)';
+        // Blue gradient scale
+        if (value === 0) return '#f1f5f9'; // slate-100
+        if (value < 0.2) return '#bfdbfe'; // blue-200
+        if (value < 0.4) return '#93c5fd'; // blue-300
+        if (value < 0.6) return '#60a5fa'; // blue-400
+        if (value < 0.8) return '#3b82f6'; // blue-500
+        return '#2563eb'; // blue-600
     };
 
     return (
-        <div className="neo-card p-4">
-            <h4 className="text-sm font-bold text-gray-600 mb-3">{label}</h4>
-            <svg width={width} height={height} className="rounded-lg overflow-hidden">
-                {grid.map((row, y) =>
-                    row.map((value, x) => (
-                        <rect
-                            key={`${x}-${y}`}
-                            x={x * cellWidth}
-                            y={y * cellHeight}
-                            width={cellWidth}
-                            height={cellHeight}
-                            fill={getHeatColor(value)}
-                            stroke="#e5e7eb"
-                            strokeWidth="0.5"
-                        >
-                            <title>{`Position (${x}, ${y}): ${(value * 100).toFixed(1)}%`}</title>
-                        </rect>
-                    ))
-                )}
-            </svg>
-            <div className="flex justify-between items-center mt-2 text-xs text-gray-400">
-                <span>Low</span>
-                <span>Activity Level</span>
-                <span>High</span>
+        <div className="w-full">
+            <div className="flex justify-between items-end mb-4">
+                <h4 className="text-sm font-bold text-gray-600">{label}</h4>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span>Low</span>
+                    <div className="w-24 h-2 rounded-full bg-gradient-to-r from-slate-100 to-blue-600"></div>
+                    <span>High</span>
+                </div>
+            </div>
+
+            <div className="w-full relative rounded-xl overflow-hidden shadow-inner border border-white/50" style={{ height }}>
+                <svg width="100%" height="100%" preserveAspectRatio="none">
+                    {grid.map((row, y) =>
+                        row.map((value, x) => (
+                            <rect
+                                key={`${x}-${y}`}
+                                x={`${x * cellWidth}%`}
+                                y={`${y * cellHeight}%`}
+                                width={`${cellWidth}%`}
+                                height={`${cellHeight}%`}
+                                fill={getHeatColor(value)}
+                                stroke="white"
+                                strokeWidth="0.5"
+                                strokeOpacity="0.5"
+                                vectorEffect="non-scaling-stroke"
+                                className="transition-colors duration-300 hover:opacity-80"
+                            >
+                                <title>{`Pos: ${x},${y} | Val: ${(value * 100).toFixed(0)}%`}</title>
+                            </rect>
+                        ))
+                    )}
+                </svg>
             </div>
         </div>
     );
@@ -299,32 +262,35 @@ export const Heatmap = ({ grid, width = 300, height = 400, label = 'Interactions
 
 /**
  * Stat Card Component
- * For displaying key metrics
+ * Enhanced with better typography and layout
  */
 export const StatCard = ({ label, value, change, icon, color = 'blue' }) => {
     const colors = {
-        blue: 'text-blue-500',
-        green: 'text-green-500',
-        purple: 'text-purple-500',
-        orange: 'text-orange-500',
-        red: 'text-red-500'
+        blue: 'text-blue-500 bg-blue-50',
+        green: 'text-green-500 bg-green-50',
+        purple: 'text-purple-500 bg-purple-50',
+        orange: 'text-orange-500 bg-orange-50',
+        red: 'text-red-500 bg-red-50'
     };
 
+    const iconColor = colors[color] || colors.blue;
     const isPositive = change >= 0;
 
     return (
-        <div className="neo-card p-6 flex items-center gap-4 hover:scale-105 transition-transform">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${colors[color]} shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.9)]`}>
+        <div className="neo-card p-6 flex items-start gap-4 hover:translate-y-[-2px] transition-all duration-300 w-full group">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 ${iconColor} shadow-inner transition-transform group-hover:scale-110`}>
                 {icon}
             </div>
-            <div className="flex-1">
-                <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">{label}</p>
-                <div className="flex items-baseline gap-2">
-                    <p className="text-2xl font-bold text-gray-700">
+
+            <div className="flex-1 min-w-0 pt-1">
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider truncate mb-1">{label}</p>
+                <div className="flex items-end gap-2 flex-wrap">
+                    <p className="text-3xl font-bold text-gray-700 truncate leading-none">
                         {typeof value === 'number' ? value.toLocaleString() : value}
                     </p>
+
                     {change !== undefined && (
-                        <span className={`text-xs font-medium ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isPositive ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'}`}>
                             {isPositive ? '↑' : '↓'} {Math.abs(change)}%
                         </span>
                     )}

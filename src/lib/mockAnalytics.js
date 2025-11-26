@@ -61,7 +61,9 @@ export const generateMockAnalytics = (books) => {
 };
 
 export const generateMockBookAnalytics = (book) => {
-    const pageCount = book.pages?.length || 10;
+    // Ensure at least 5 pages for demo purposes if book has fewer
+    const realPageCount = book.pages?.length || 0;
+    const pageCount = Math.max(realPageCount, 8);
 
     // Generate daily views for past 30 days
     const dailyViews = Array.from({ length: 30 }, (_, i) => {
@@ -78,7 +80,7 @@ export const generateMockBookAnalytics = (book) => {
 
     // Generate page stats
     const pageStats = Array.from({ length: pageCount }, (_, i) => ({
-        pageNumber: i,
+        pageNumber: i + 1, // Start from page 1
         views: Math.floor(Math.random() * 100) + 20,
         uniqueViewers: Math.floor(Math.random() * 50) + 10,
         avgDwellTime: Math.floor(Math.random() * 15000) + 3000, // 3-18 seconds
@@ -97,9 +99,11 @@ export const generateMockBookAnalytics = (book) => {
         totalViews,
         uniqueUsers: totalUsers,
         avgSessionDuration: 210, // 3.5 minutes
+        totalPages: pageCount, // Return the simulated page count
         dailyViews,
         pageStats,
         topPages,
+        heatmapData: generateMockHeatmap(),
     };
 };
 

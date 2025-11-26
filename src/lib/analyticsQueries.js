@@ -183,13 +183,38 @@ export const fetchBookAnalytics = async (bookId, days = 30) => {
       sessions: acc.sessions + (day.total_sessions || 0),
     }), { views: 0, users: 0, duration: 0, sessions: 0 });
 
+    // Fetch aggregated heatmap data for all pages
+    const { data: heatmapData, error: heatmapError } = await supabase
+      .from('analytics_heatmap_grid')
+      .select('click_grid, hover_grid')
+      .eq('book_id', bookId)
+      .order('computed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (heatmapError && heatmapError.code !== 'PGRST116') {
+      console.warn('Error fetching heatmap:', heatmapError);
+    }
+
+    // Fetch current likes count
+    const { data: bookData } = await supabase
+      .from('books')
+      .select('likes')
+      .eq('id', bookId)
+      .single();
+
     return {
       totalViews: totals.views,
+      totalLikes: bookData?.likes || 0,
       uniqueUsers: totals.users,
       avgSessionDuration: totals.sessions > 0 ? Math.round(totals.duration / totals.sessions) : 0,
       dailyViews: dailyStats || [],
       pageStats: pageStatsArray,
-      topPages
+      topPages,
+      heatmapData: heatmapData ? {
+        clickGrid: heatmapData.click_grid || [],
+        hoverGrid: heatmapData.hover_grid || []
+      } : null
     };
   } catch (error) {
     console.error('Error fetching book analytics:', error);
@@ -199,7 +224,8 @@ export const fetchBookAnalytics = async (bookId, days = 30) => {
       avgSessionDuration: 0,
       dailyViews: [],
       pageStats: [],
-      topPages: []
+      topPages: [],
+      heatmapData: null
     };
   }
 };

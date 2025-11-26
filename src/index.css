@@ -138,6 +138,14 @@ body {
 /* Image loading optimization */
 img {
   content-visibility: auto;
+  /* Prevent layout shifts */
+  height: auto;
+}
+
+/* Priority images (hero, logos) should load eagerly */
+.priority-image {
+  loading: eager;
+  fetchpriority: high;
 }
 
 /* Reduce motion for accessibility */

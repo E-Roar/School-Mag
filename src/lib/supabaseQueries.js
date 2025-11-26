@@ -16,6 +16,7 @@ const transformBook = (book) => ({
   coverThumbnailUrl: book.cover_thumbnail_url || book.hero_image_path,
   visualSettings: book.visual_settings || {},
   is_published: book.is_published, // Ensure this is passed through
+  likes: book.likes || 0,
   pages: [], // Will be populated separately
 })
 
@@ -373,3 +374,116 @@ export const fetchNotifications = async (limit = 10) => {
     return []
   }
 }
+
+// Delete a notification (Admin only)
+export const deleteNotification = async (id) => {
+  if (!isSupabaseConfigured || !supabase) return null
+
+  try {
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+    return true
+  } catch (error) {
+    console.error('Error deleting notification:', error)
+    throw error
+  }
+}
+
+// =====================================================
+// LIKES FUNCTIONS
+// =====================================================
+
+// Get device ID (fingerprint) for anonymous like tracking
+const getDeviceId = () => {
+  let deviceId = localStorage.getItem('device_id');
+  if (!deviceId) {
+    deviceId = `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem('device_id', deviceId);
+  }
+  return deviceId;
+};
+
+// Like a book
+export const likeBook = async (bookId) => {
+  if (!isSupabaseConfigured || !supabase) return null;
+
+  try {
+    const deviceId = getDeviceId();
+
+    const { data, error } = await supabase.rpc('increment_book_likes', {
+      p_book_id: bookId,
+      p_device_id: deviceId
+    });
+
+    if (error) throw error;
+    return data; // Returns updated likes count
+  } catch (error) {
+    console.error('Error liking book:', error);
+    throw error;
+  }
+};
+
+// Unlike a book
+export const unlikeBook = async (bookId) => {
+  if (!isSupabaseConfigured || !supabase) return null;
+
+  try {
+    const deviceId = getDeviceId();
+
+    const { data, error } = await supabase.rpc('decrement_book_likes', {
+      p_book_id: bookId,
+      p_device_id: deviceId
+    });
+
+    if (error) throw error;
+    return data; // Returns updated likes count
+  } catch (error) {
+    console.error('Error unliking book:', error);
+    throw error;
+  }
+};
+
+// Check if current device has liked a book
+export const hasLikedBook = async (bookId) => {
+  if (!isSupabaseConfigured || !supabase) return false;
+
+  try {
+    const deviceId = getDeviceId();
+
+    const { data, error } = await supabase
+      .from('book_likes')
+      .select('id')
+      .eq('book_id', bookId)
+      .eq('device_id', deviceId)
+      .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return !!data;
+  } catch (error) {
+    console.error('Error checking like status:', error);
+    return false;
+  }
+};
+
+// Get likes count for a book
+export const getBookLikes = async (bookId) => {
+  if (!isSupabaseConfigured || !supabase) return 0;
+
+  try {
+    const { data, error } = await supabase
+      .from('books')
+      .select('likes')
+      .eq('id', bookId)
+      .single();
+
+    if (error) throw error;
+    return data?.likes || 0;
+  } catch (error) {
+    console.error('Error getting book likes:', error);
+    return 0;
+  }
+};

@@ -8,7 +8,7 @@ import { IssueDetails } from "./IssueDetails";
 export const Editor = () => {
     const { selectedBook, refetch, isLoading, isDemoMode } = useBookData();
     const [openSections, setOpenSections] = useState({
-        details: true,
+        details: false,
         pages: false,
         visuals: false
     });

@@ -344,11 +344,26 @@ export const LandingPage = () => {
                                                     {book.subtitle}
                                                 </p>
 
-                                                <div className="pt-4 border-t border-gray-200/50 flex items-center justify-between">
-                                                    <span className="text-xs font-semibold text-gray-400">Read Now</span>
-                                                    <span className="w-8 h-8 rounded-full bg-[#e0e5ec] shadow-[3px_3px_6px_rgba(163,177,198,0.5),-3px_-3px_6px_rgba(255,255,255,0.8)] flex items-center justify-center text-blue-500 group-hover:text-blue-600 group-hover:scale-110 transition-all">
-                                                        →
-                                                    </span>
+                                                <div className="pt-4 border-t border-gray-200/50">
+                                                    {/* Likes count */}
+                                                    {book.likes !== undefined && book.likes > 0 && (
+                                                        <div className="flex items-center gap-1.5 text-pink-500 mb-3">
+                                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                                <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                            </svg>
+                                                            <span className="text-xs font-semibold">
+                                                                {book.likes} {book.likes === 1 ? 'Like' : 'Likes'}
+                                                            </span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Read Now Button */}
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs font-semibold text-gray-400">Read Now</span>
+                                                        <span className="w-8 h-8 rounded-full bg-[#e0e5ec] shadow-[3px_3px_6px_rgba(163,177,198,0.5),-3px_-3px_6px_rgba(255,255,255,0.8)] flex items-center justify-center text-blue-500 group-hover:text-blue-600 group-hover:scale-110 transition-all">
+                                                            →
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -356,11 +371,12 @@ export const LandingPage = () => {
                                 </ScrollReveal>
                             ))}
                         </div>
-                    )}
-                </section>
+                    )
+                    }
+                </section >
 
                 {/* Suggestions Section */}
-                <section id="suggestions" className="max-w-3xl mx-auto w-full">
+                < section id="suggestions" className="max-w-3xl mx-auto w-full" >
                     <div className="neo-card p-8 md:p-12 relative overflow-hidden transition-all duration-300 hover:shadow-[12px_12px_24px_rgba(163,177,198,0.7),-12px_-12px_24px_rgba(255,255,255,0.9)]">
                         {/* Decorative background element */}
                         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-50 to-purple-50 rounded-bl-full opacity-50 pointer-events-none"></div>
@@ -410,12 +426,12 @@ export const LandingPage = () => {
                             </form>
                         </div>
                     </div>
-                </section>
+                </section >
 
-            </main>
+            </main >
 
             {/* Footer */}
-            <footer className="mt-20 py-12 bg-[#e0e5ec] border-t border-white/50">
+            < footer className="mt-20 py-12 bg-[#e0e5ec] border-t border-white/50" >
                 <div className="max-w-7xl mx-auto px-4 text-center space-y-6">
                     <div className="flex items-center justify-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
                         <div className="w-8 h-8 rounded-lg bg-gray-300"></div>
@@ -431,7 +447,7 @@ export const LandingPage = () => {
                         © {new Date().getFullYear()} {settings.school_name}. Powered by E-Roar Platform.
                     </p>
                 </div>
-            </footer>
-        </div>
+            </footer >
+        </div >
     );
 };

@@ -34,7 +34,7 @@ const MarqueeRow = ({ items, settings, reverse }) => {
   );
 };
 
-export const UI = () => {
+export const UI = ({ analytics }) => {
   const { selectedBook } = useBookData();
   const [page, setPage] = useAtom(pageAtom);
   const pages = selectedBook?.pages ?? [];
@@ -48,6 +48,13 @@ export const UI = () => {
 
   // Track analytics
   useAnalytics();
+
+  // Track page views when page changes
+  useEffect(() => {
+    if (analytics && page !== null) {
+      analytics.trackPageView(page);
+    }
+  }, [page, analytics]);
 
   useEffect(() => {
     if (!selectedBook) {
@@ -103,7 +110,12 @@ export const UI = () => {
     return null;
   }
 
-  const goToCover = () => setPage(0);
+  const goToCover = () => {
+    if (analytics) {
+      analytics.trackNavClick('cover', page);
+    }
+    setPage(0);
+  };
 
   // In RTL, "Next" (visually left) should go to lower page numbers (physically next in Arabic book)
   // But wait, "Next" usually means "Advance in reading".
@@ -124,8 +136,27 @@ export const UI = () => {
   // So "Next" (advance) = retreatPage (-1).
   // "Prev" (go back) = advancePage (+1).
 
-  const handleNext = isRTL ? retreatPage : advancePage;
-  const handlePrev = isRTL ? advancePage : retreatPage;
+  const handleNext = () => {
+    if (analytics) {
+      analytics.trackNavClick('next', page);
+    }
+    if (isRTL) {
+      retreatPage();
+    } else {
+      advancePage();
+    }
+  };
+
+  const handlePrev = () => {
+    if (analytics) {
+      analytics.trackNavClick('prev', page);
+    }
+    if (isRTL) {
+      advancePage();
+    } else {
+      retreatPage();
+    }
+  };
 
   const pageLabel =
     page === 0
