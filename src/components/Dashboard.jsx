@@ -383,7 +383,7 @@ const IssueSettingsPanel = ({ book }) => {
 };
 
 export const Dashboard = () => {
-  const { selectedBook, updatePageImage, addPage, removePage, refetch, isLoading } = useBookData();
+  const { selectedBook, updatePageImage, addPage, removePage, refetch, isLoading, isDemoMode } = useBookData();
   const [open, setOpen] = useState(false);
   const [openSection, setOpenSection] = useState("issue");
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
@@ -429,6 +429,13 @@ export const Dashboard = () => {
           </button>
           {open && (
             <div className="max-h-[calc(100vh-120px)] md:max-h-[70vh] overflow-y-auto p-4 md:p-5 space-y-3 md:space-y-4 glass-scroll">
+              {isDemoMode && (
+                <div className="p-3 rounded-xl bg-blue-500/20 border border-blue-500/30 text-center">
+                  <p className="text-xs text-blue-200 font-medium uppercase tracking-wider">
+                    👀 Demo Mode: Changes are local only and cannot be saved.
+                  </p>
+                </div>
+              )}
               {selectedBook && (
                 <div className="glass-panel rounded-2xl border border-white/15 p-4 space-y-3">
                   <div>
@@ -440,23 +447,27 @@ export const Dashboard = () => {
                   </div>
                   <button
                     onClick={handleSaveAll}
-                    disabled={saving || isLoading}
+                    disabled={saving || isLoading || isDemoMode}
                     className={`w-full rounded-full py-2 text-xs uppercase tracking-[0.35em] font-semibold shadow-neon transition-all ${saving || isLoading
                       ? "bg-gray-500/50 cursor-not-allowed"
-                      : saveStatus === "success"
-                        ? "bg-green-500 text-white"
-                        : saveStatus === "error"
-                          ? "bg-red-500 text-white"
-                          : "bg-gradient-to-r from-cyan-300 to-blue-500 text-black hover:opacity-90"
+                      : isDemoMode
+                        ? "bg-gray-500/20 text-white/50 cursor-not-allowed border border-white/10"
+                        : saveStatus === "success"
+                          ? "bg-green-500 text-white"
+                          : saveStatus === "error"
+                            ? "bg-red-500 text-white"
+                            : "bg-gradient-to-r from-cyan-300 to-blue-500 text-black hover:opacity-90"
                       }`}
                   >
                     {saving
                       ? "Saving..."
-                      : saveStatus === "success"
-                        ? "✓ Saved Successfully"
-                        : saveStatus === "error"
-                          ? "✗ Save Failed"
-                          : "💾 Save All Changes"}
+                      : isDemoMode
+                        ? "Read-Only Mode (Changes Disabled)"
+                        : saveStatus === "success"
+                          ? "✓ Saved Successfully"
+                          : saveStatus === "error"
+                            ? "✗ Save Failed"
+                            : "💾 Save All Changes"}
                   </button>
                   {saveStatus === "success" && (
                     <p className="text-xs text-green-400 text-center">

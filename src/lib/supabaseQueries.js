@@ -335,3 +335,41 @@ export const recordAnalyticsEvent = async (event) => {
     }
   }
 }
+
+// Create a new notification (Admin only)
+export const createNotification = async (notification) => {
+  if (!isSupabaseConfigured || !supabase) return null
+
+  try {
+    const { data, error } = await supabase
+      .from('notifications')
+      .insert([notification])
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  } catch (error) {
+    console.error('Error creating notification:', error)
+    throw error
+  }
+}
+
+// Fetch recent notifications
+export const fetchNotifications = async (limit = 10) => {
+  if (!isSupabaseConfigured || !supabase) return []
+
+  try {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('Error fetching notifications:', error)
+    return []
+  }
+}

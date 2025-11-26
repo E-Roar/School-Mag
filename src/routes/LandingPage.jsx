@@ -6,6 +6,7 @@ import { NeomorphicLogo } from "../components/NeomorphicLogo";
 import { MobileMenu, MobileMenuItem } from "../components/MobileMenu";
 import { FullPageLoader } from "../components/CircularLoader";
 import { ScrollReveal } from "../hooks/useScrollReveal";
+import { NotificationBell } from "../components/NotificationBell";
 
 export const LandingPage = () => {
     const { books, isLoading } = useBookData();
@@ -140,6 +141,7 @@ export const LandingPage = () => {
                                 className="neo-input py-2 text-sm focus:w-60 transition-all duration-300"
                             />
                         </div>
+                        <NotificationBell />
                         <Link to="/admin" className="neo-btn text-xs px-4 py-2 text-blue-600 hover:scale-105 transition-transform">
                             Admin
                         </Link>

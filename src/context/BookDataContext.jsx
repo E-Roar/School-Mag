@@ -17,7 +17,7 @@ import { logActivity } from "../lib/logger";
 
 const BookDataContext = createContext();
 
-export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclude = null }) => {
+export const BookDataProvider = ({ children, isAdminMode = false, isDemoMode = false, bookIdToInclude = null }) => {
   const queryClient = useQueryClient();
   const [activeBookId, setActiveBookId] = useState(null);
 
@@ -87,6 +87,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
 
   const updatePageImageMutation = useMutation({
     mutationFn: async ({ bookId, pageIndex, side, file }) => {
+      if (isDemoMode) throw new Error("Changes cannot be saved in Demo Mode");
       const book = books.find((b) => b.id === bookId);
       if (!book) throw new Error('Book not found');
 
@@ -206,6 +207,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
 
   const addPageMutation = useMutation({
     mutationFn: async (bookId) => {
+      if (isDemoMode) throw new Error("Changes cannot be saved in Demo Mode");
       const book = books.find((b) => b.id === bookId);
       if (!book) throw new Error('Book not found');
 
@@ -294,6 +296,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
 
   const removePageMutation = useMutation({
     mutationFn: async ({ bookId, pageIndex }) => {
+      if (isDemoMode) throw new Error("Changes cannot be saved in Demo Mode");
       const book = books.find((b) => b.id === bookId);
       if (!book) {
         throw new Error("Book not found");
@@ -353,6 +356,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
 
   const updateVisualSettingsMutation = useMutation({
     mutationFn: async ({ bookId, changes }) => {
+      if (isDemoMode) throw new Error("Changes cannot be saved in Demo Mode");
       const isValidId = isUUID(bookId);
       if (isSupabaseConfigured && supabase && isValidId) {
         const book = books.find((b) => b.id === bookId);
@@ -380,6 +384,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
 
   const updateBookMetaMutation = useMutation({
     mutationFn: async ({ bookId, changes }) => {
+      if (isDemoMode) throw new Error("Changes cannot be saved in Demo Mode");
       const isValidId = isUUID(bookId);
       if (isSupabaseConfigured && supabase && isValidId) {
         const updateData = {
@@ -411,6 +416,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
 
   const createNewBookMutation = useMutation({
     mutationFn: async () => {
+      if (isDemoMode) throw new Error("Changes cannot be saved in Demo Mode");
       if (!isSupabaseConfigured || !supabase) {
         alert("Supabase not configured.");
         return;
@@ -457,6 +463,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
 
   const deleteBookMutation = useMutation({
     mutationFn: async (bookId) => {
+      if (isDemoMode) throw new Error("Changes cannot be saved in Demo Mode");
       if (!isSupabaseConfigured || !supabase) return;
       const { error } = await supabase.from("books").delete().eq("id", bookId);
       if (error) throw error;
@@ -483,6 +490,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
   // Cleanup Function
   const cleanupEmptyBooksMutation = useMutation({
     mutationFn: async () => {
+      if (isDemoMode) throw new Error("Changes cannot be saved in Demo Mode");
       if (!isSupabaseConfigured || !supabase) return;
 
       // Fetch all books with their pages
@@ -538,6 +546,10 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
   const cleanupEmptyBooks = () => cleanupEmptyBooksMutation.mutate();
 
   const importPdfPages = async (bookId, files) => {
+    if (isDemoMode) {
+      alert("Changes cannot be saved in Demo Mode");
+      return;
+    }
     if (!isSupabaseConfigured || !supabase) return;
 
     try {
@@ -641,10 +653,9 @@ export const BookDataProvider = ({ children, isAdminMode = false, bookIdToInclud
     refetch,
     createNewBook,
     deleteBook,
-    createNewBook,
-    deleteBook,
     cleanupEmptyBooks,
-    importPdfPages
+    importPdfPages,
+    isDemoMode // Export isDemoMode
   };
 
   return (

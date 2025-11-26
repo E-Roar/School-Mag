@@ -6,6 +6,7 @@ import { LoginPanel } from "../components/LoginPanel";
 
 export const AdminPage = () => {
   const [isAuthed, setIsAuthed] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -145,6 +146,11 @@ export const AdminPage = () => {
     }
   };
 
+  const handleDemoLogin = () => {
+    setIsAuthed(true);
+    setIsDemoMode(true);
+  };
+
   if (loading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-gray-900 text-white">
@@ -157,11 +163,11 @@ export const AdminPage = () => {
   }
 
   if (!isAuthed) {
-    return <LoginPanel onAuthenticated={handleAuth} error={error} loading={loading} />;
+    return <LoginPanel onAuthenticated={handleAuth} onDemoLogin={handleDemoLogin} error={error} loading={loading} />;
   }
 
   return (
-    <BookDataProvider isAdminMode={true}>
+    <BookDataProvider isAdminMode={true} isDemoMode={isDemoMode}>
       <AdminDashboard />
     </BookDataProvider>
   );

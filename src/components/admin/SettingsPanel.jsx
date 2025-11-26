@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { logActivity } from "../../lib/logger";
 import { validateLogoFile, generateLogoVariants } from "../../utils/logoCompression";
+import { NotificationManager } from "./NotificationManager";
 
 export const SettingsPanel = () => {
     const [settings, setSettings] = useState({
@@ -223,7 +224,7 @@ export const SettingsPanel = () => {
             <h1 className="text-2xl font-bold text-gray-700 mb-6 tracking-tight">Platform Settings</h1>
 
             {/* General Settings */}
-            <div className="neo-card p-6 mb-8">
+            <div id="settings-general" className="neo-card p-6 mb-8">
                 <h2 className="text-lg font-bold text-gray-700 mb-4">General Information</h2>
                 <div className="space-y-6">
                     <div>
@@ -341,7 +342,7 @@ export const SettingsPanel = () => {
             </div>
 
             {/* Security Settings */}
-            <div className="neo-card p-6">
+            <div id="settings-security" className="neo-card p-6">
                 <h2 className="text-lg font-bold text-gray-700 mb-4">Security</h2>
 
                 {/* Email Update */}
@@ -405,6 +406,11 @@ export const SettingsPanel = () => {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Notifications Section */}
+            <div className="neo-card p-6 mt-8">
+                <NotificationManager />
             </div>
         </div>
     );

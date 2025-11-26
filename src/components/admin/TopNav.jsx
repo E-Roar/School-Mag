@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { MobileMenu, MobileMenuItem } from "../MobileMenu";
 
+import { useBookData } from "../../context/BookDataContext";
+
 export const TopNav = ({ currentView, onViewChange }) => {
+    const { isDemoMode } = useBookData();
     const [settings, setSettings] = useState({
         school_logo_url: "",
         school_name: "",
@@ -57,10 +60,15 @@ export const TopNav = ({ currentView, onViewChange }) => {
                     <span className="font-bold text-gray-700 text-sm md:text-lg tracking-tight group-hover:text-blue-600 transition-colors">
                         Admin Panel
                     </span>
+                    {isDemoMode && (
+                        <span className="ml-2 px-2 py-0.5 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold uppercase tracking-wider border border-blue-200">
+                            Demo Mode
+                        </span>
+                    )}
                 </Link>
 
                 {/* Desktop Navigation */}
-                <div className="hidden md:flex items-center gap-2 p-1.5 rounded-full bg-[#e0e5ec] shadow-[inset_5px_5px_10px_rgba(163,177,198,0.6),inset_-5px_-5px_10px_rgba(255,255,255,0.8)]">
+                <div id="topnav-view-toggles" className="hidden md:flex items-center gap-2 p-1.5 rounded-full bg-[#e0e5ec] shadow-[inset_5px_5px_10px_rgba(163,177,198,0.6),inset_-5px_-5px_10px_rgba(255,255,255,0.8)]">
                     {navItems.map((item) => (
                         <button
                             key={item.id}
@@ -78,6 +86,14 @@ export const TopNav = ({ currentView, onViewChange }) => {
 
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-4">
+                {isDemoMode && (
+                    <button
+                        onClick={() => window.dispatchEvent(new CustomEvent('start-tour'))}
+                        className="neo-btn text-purple-500 hover:text-purple-600 text-xs px-4 py-2 hover:scale-105 transition-transform flex items-center gap-2"
+                    >
+                        <span>🎓</span> Tutorial
+                    </button>
+                )}
                 <Link
                     to="/"
                     className="neo-btn text-blue-500 hover:text-blue-600 text-xs px-4 py-2 hover:scale-105 transition-transform"

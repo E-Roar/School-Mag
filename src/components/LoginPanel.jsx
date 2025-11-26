@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
-export const LoginPanel = ({ onAuthenticated, error, loading }) => {
+export const LoginPanel = ({ onAuthenticated, onDemoLogin, error, loading }) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
@@ -11,13 +11,13 @@ export const LoginPanel = ({ onAuthenticated, error, loading }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="glass-card w-full max-w-md p-8 space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#e0e5ec] p-4">
+            <div className="neo-card w-full max-w-md p-8 space-y-6">
                 <div className="text-center">
                     <p className="text-xs uppercase tracking-[0.4em] text-gray-500 mb-2">
                         Admin Access
                     </p>
-                    <h2 className="text-3xl font-bold text-gradient">Sign in</h2>
+                    <h2 className="text-3xl font-bold text-gray-700">Sign in</h2>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -27,7 +27,7 @@ export const LoginPanel = ({ onAuthenticated, error, loading }) => {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="glass-input"
+                            className="neo-input"
                             autoComplete="username"
                             required
                         />
@@ -39,7 +39,7 @@ export const LoginPanel = ({ onAuthenticated, error, loading }) => {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="glass-input"
+                            className="neo-input"
                             autoComplete="current-password"
                             required
                         />
@@ -54,9 +54,28 @@ export const LoginPanel = ({ onAuthenticated, error, loading }) => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full glass-btn-primary py-3 font-semibold uppercase tracking-wider"
+                        className="w-full neo-btn text-blue-600 py-3 font-semibold uppercase tracking-wider"
                     >
                         {loading ? "Signing in..." : "Login"}
+                    </button>
+
+                    <div className="relative flex py-2 items-center">
+                        <div className="flex-grow border-t border-gray-400/20"></div>
+                        <span className="flex-shrink-0 mx-4 text-gray-400 text-xs uppercase tracking-widest">Or</span>
+                        <div className="flex-grow border-t border-gray-400/20"></div>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={onDemoLogin}
+                        className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-white/10 hover:border-white/30 hover:bg-white/10 transition-all group"
+                    >
+                        <span className="block text-lg font-bold text-white mb-1 group-hover:scale-105 transition-transform">
+                            👀 View Demo
+                        </span>
+                        <span className="block text-[10px] uppercase tracking-[0.2em] text-white/60">
+                            Read-Only Access
+                        </span>
                     </button>
                 </form>
 
@@ -79,6 +98,6 @@ export const LoginPanel = ({ onAuthenticated, error, loading }) => {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };

@@ -6,7 +6,7 @@ import { VisualSettings } from "./VisualSettings";
 import { IssueDetails } from "./IssueDetails";
 
 export const Editor = () => {
-    const { selectedBook, refetch, isLoading } = useBookData();
+    const { selectedBook, refetch, isLoading, isDemoMode } = useBookData();
     const [openSections, setOpenSections] = useState({
         details: true,
         pages: false,
@@ -83,6 +83,7 @@ export const Editor = () => {
 
                 <div className="flex items-center gap-4">
                     <Link
+                        id="editor-preview-btn"
                         to={`/view/${selectedBook.id}`}
                         target="_blank"
                         className="neo-btn text-gray-600 text-sm px-4 py-2"
@@ -91,23 +92,26 @@ export const Editor = () => {
                     </Link>
 
                     <button
+                        id="editor-save-btn"
                         onClick={handleSave}
-                        disabled={saving || isLoading}
-                        className={`neo-btn text-sm px-6 py-2 transition-all ${saveStatus === "success"
-                            ? "text-green-500 shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]"
-                            : saveStatus === "error"
-                                ? "text-red-500"
-                                : "text-blue-600"
+                        disabled={saving || isLoading || isDemoMode}
+                        className={`neo-btn text-sm px-6 py-2 transition-all ${isDemoMode
+                            ? "text-gray-400 cursor-not-allowed opacity-60"
+                            : saveStatus === "success"
+                                ? "text-green-500 shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]"
+                                : saveStatus === "error"
+                                    ? "text-red-500"
+                                    : "text-blue-600"
                             }`}
                     >
-                        {saving ? "Saving..." : saveStatus === "success" ? "Saved!" : "Save Changes"}
+                        {saving ? "Saving..." : isDemoMode ? "Read Only" : saveStatus === "success" ? "Saved!" : "Save Changes"}
                     </button>
                 </div>
             </header>
 
             {/* Accordion Content */}
             <div className="flex-1 overflow-y-auto p-6">
-                <div className="max-w-5xl mx-auto space-y-6 pb-20">
+                <div id="editor-sections" className="max-w-5xl mx-auto space-y-6 pb-20">
                     {accordionSections.map((section) => (
                         <div
                             key={section.id}
@@ -115,6 +119,7 @@ export const Editor = () => {
                         >
                             {/* Accordion Header */}
                             <button
+                                id={`editor-accordion-${section.id}`}
                                 onClick={() => toggleSection(section.id)}
                                 className="w-full p-6 flex items-center justify-between hover:bg-white/30 transition-colors"
                             >
