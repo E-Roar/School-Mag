@@ -1,38 +1,21 @@
-/* Import Poppins font locally */
-@import '@fontsource/poppins/100.css';
-@import '@fontsource/poppins/200.css';
-@import '@fontsource/poppins/300.css';
-@import '@fontsource/poppins/400.css';
-@import '@fontsource/poppins/500.css';
-@import '@fontsource/poppins/600.css';
-@import '@fontsource/poppins/700.css';
-@import '@fontsource/poppins/800.css';
-@import '@fontsource/poppins/900.css';
+/* Import modern web fonts */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* =========================================
-   CUSTOM ARABIC FONT
-   ========================================= */
-@font-face {
-  font-family: 'TufuliArabic';
-  src: url('/TufuliArabicDEMO-Bold.otf') format('opentype');
-  font-weight: bold;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* =========================================
-   GLOBAL BACKGROUND & FONT
+   GLOBAL BACKGROUND & MODERN FONT
    ========================================= */
 body {
   margin: 0;
-  /* Apply TufuliArabic globally as requested */
-  font-family: 'TufuliArabic', 'Poppins', sans-serif;
+  /* Modern, clean font stack with web fallbacks */
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   background-color: #e0e5ec;
   color: #4a5568;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {

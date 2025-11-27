@@ -4,8 +4,10 @@ import { logActivity } from "../../lib/logger";
 import { validateLogoFile, generateLogoVariants } from "../../utils/logoCompression";
 import { compressImage } from "../../utils/imageCompression";
 import { NotificationManager } from "./NotificationManager";
+import { useTranslation } from 'react-i18next';
 
 export const SettingsPanel = () => {
+    const { t } = useTranslation();
     const [settings, setSettings] = useState({
         school_name: "",
         school_description: "",
@@ -278,31 +280,31 @@ export const SettingsPanel = () => {
         }));
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Loading settings...</div>;
+    if (loading) return <div className="p-8 text-center text-gray-500">{t('admin.settings_panel.loading_settings')}</div>;
 
     const renderGeneralSettings = () => (
         <div className="space-y-6">
             <div>
-                <label className="block text-sm font-semibold text-gray-600 mb-2 pl-2">School / Organization Name</label>
+                <label className="block text-sm font-semibold text-gray-600 mb-2 pl-2">{t('admin.settings_panel.school_name')}</label>
                 <input
                     type="text"
                     value={settings.school_name}
                     onChange={(e) => setSettings({ ...settings, school_name: e.target.value })}
                     className="neo-input"
-                    placeholder="E.g. E-Roar Magazine"
+                    placeholder={t('admin.settings_panel.school_name_placeholder')}
                 />
             </div>
             <div>
-                <label className="block text-sm font-semibold text-gray-600 mb-2 pl-2">Description</label>
+                <label className="block text-sm font-semibold text-gray-600 mb-2 pl-2">{t('admin.settings_panel.description')}</label>
                 <textarea
                     value={settings.school_description}
                     onChange={(e) => setSettings({ ...settings, school_description: e.target.value })}
                     className="neo-input h-32 rounded-2xl"
-                    placeholder="Brief description of the platform..."
+                    placeholder={t('admin.settings_panel.description_placeholder')}
                 />
             </div>
             <div>
-                <label className="block text-sm font-semibold text-gray-600 mb-2 pl-2">Logo</label>
+                <label className="block text-sm font-semibold text-gray-600 mb-2 pl-2">{t('admin.settings_panel.logo')}</label>
                 <div className="flex items-center gap-4">
                     {settings.school_logo_url && (
                         <div className="w-20 h-20 rounded-xl bg-[#e0e5ec] shadow-[8px_8px_16px_rgba(163,177,198,0.6),-8px_-8px_16px_rgba(255,255,255,0.8)] p-3 flex items-center justify-center hover:shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] transition-all duration-300">
@@ -315,7 +317,7 @@ export const SettingsPanel = () => {
                     )}
                     <div className="flex-1">
                         <label className="neo-btn cursor-pointer inline-flex items-center gap-2 text-sm text-gray-600 px-4 py-2 hover:scale-105 transition-transform">
-                            <span>📤 {uploadProgress ? 'Uploading...' : 'Upload Logo'}</span>
+                            <span>📤 {uploadProgress ? t('admin.settings_panel.uploading') : t('admin.settings_panel.upload_logo')}</span>
                             <input
                                 type="file"
                                 accept="image/*"
@@ -331,7 +333,7 @@ export const SettingsPanel = () => {
                         )}
                         {!uploadProgress && (
                             <p className="text-xs text-gray-400 mt-2 pl-2">
-                                Upload PNG, JPG, or SVG. Best: 512x512px square. Will auto-generate favicons & OG images.
+                                {t('admin.settings_panel.upload_hint')}
                             </p>
                         )}
                     </div>
@@ -340,7 +342,7 @@ export const SettingsPanel = () => {
 
             {settings.school_logo_url && (
                 <div className="border-t border-gray-200/50 pt-6">
-                    <label className="block text-sm font-semibold text-gray-600 mb-4 pl-2">Logo Size (for Navigation)</label>
+                    <label className="block text-sm font-semibold text-gray-600 mb-4 pl-2">{t('admin.settings_panel.logo_size_nav')}</label>
                     <div className="flex items-center gap-6">
                         <div className="flex-1 space-y-4">
                             <input
@@ -355,13 +357,13 @@ export const SettingsPanel = () => {
                                 }}
                             />
                             <div className="flex justify-between text-xs text-gray-400 px-2">
-                                <span>Small (32px)</span>
+                                <span>{t('admin.settings_panel.small')} (32px)</span>
                                 <span className="font-semibold text-blue-500">{settings.logo_size || 48}px</span>
-                                <span>Large (80px)</span>
+                                <span>{t('admin.settings_panel.large')} (80px)</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-4 px-6 py-4 rounded-2xl bg-[#e0e5ec] shadow-[inset_3px_3px_6px_rgba(163,177,198,0.4),inset_-3px_-3px_6px_rgba(255,255,255,0.7)]">
-                            <span className="text-xs text-gray-500 font-medium">Preview:</span>
+                            <span className="text-xs text-gray-500 font-medium">{t('admin.settings_panel.preview')}:</span>
                             <div
                                 className="rounded-xl bg-[#e0e5ec] shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.8)] p-2 flex items-center justify-center transition-all duration-200"
                                 style={{
@@ -387,7 +389,7 @@ export const SettingsPanel = () => {
                     disabled={saving}
                     className="neo-btn text-blue-600 px-8"
                 >
-                    {saving ? "Saving..." : "Save Changes"}
+                    {saving ? t('admin.settings_panel.saving') : t('common.save')}
                 </button>
             </div>
         </div>
@@ -399,10 +401,9 @@ export const SettingsPanel = () => {
                 <div>
                     <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
-                            <h3 className="text-md font-semibold text-gray-600 mb-2">🖼️ Landing Page Background</h3>
+                            <h3 className="text-md font-semibold text-gray-600 mb-2">🖼️ {t('admin.settings_panel.landing_bg')}</h3>
                             <p className="text-sm text-gray-500 leading-relaxed">
-                                Upload a custom background image for the landing page.
-                                Images are automatically compressed to WebP for performance.
+                                {t('admin.settings_panel.landing_bg_desc')}
                             </p>
                         </div>
                     </div>
@@ -429,14 +430,14 @@ export const SettingsPanel = () => {
                                         </button>
                                     </>
                                 ) : (
-                                    <span className="text-gray-400 text-sm">No Image Set</span>
+                                    <span className="text-gray-400 text-sm">{t('admin.settings_panel.no_image_set')}</span>
                                 )}
                             </div>
 
                             <div className="flex-1 space-y-4">
                                 <div>
                                     <label className="neo-btn cursor-pointer inline-flex items-center gap-2 text-sm text-blue-600 px-6 py-3 hover:scale-105 transition-transform">
-                                        <span>📤 {uploadProgress && uploadProgress.includes('background') ? 'Processing...' : 'Upload Background Image'}</span>
+                                        <span>📤 {uploadProgress && uploadProgress.includes('background') ? t('admin.settings_panel.processing') : t('admin.settings_panel.upload_bg')}</span>
                                         <input
                                             type="file"
                                             accept="image/*"
@@ -446,7 +447,7 @@ export const SettingsPanel = () => {
                                         />
                                     </label>
                                     <p className="text-xs text-gray-400 mt-2">
-                                        Recommended: 1920x1080px or larger.
+                                        {t('admin.settings_panel.bg_recommended')}
                                     </p>
                                 </div>
 
@@ -455,41 +456,41 @@ export const SettingsPanel = () => {
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-300/50">
                                         {/* Fixed vs Scroll */}
                                         <div className="flex items-center justify-between bg-white/50 p-3 rounded-lg">
-                                            <span className="text-sm text-gray-600 font-medium">Attachment</span>
+                                            <span className="text-sm text-gray-600 font-medium">{t('admin.settings_panel.attachment')}</span>
                                             <button
                                                 onClick={() => setSettings(s => ({ ...s, landing_bg_fixed: !s.landing_bg_fixed }))}
                                                 className="text-xs font-bold text-blue-600 bg-blue-100 px-3 py-1 rounded-full hover:bg-blue-200 transition-colors"
                                             >
-                                                {settings.landing_bg_fixed ? "Fixed (Parallax)" : "Scrollable"}
+                                                {settings.landing_bg_fixed ? t('admin.settings_panel.fixed_parallax') : t('admin.settings_panel.scrollable')}
                                             </button>
                                         </div>
 
                                         {/* Size Mode */}
                                         <div className="flex items-center justify-between bg-white/50 p-3 rounded-lg">
-                                            <span className="text-sm text-gray-600 font-medium">Size</span>
+                                            <span className="text-sm text-gray-600 font-medium">{t('admin.settings_panel.size')}</span>
                                             <select
                                                 value={settings.landing_bg_size}
                                                 onChange={(e) => setSettings(s => ({ ...s, landing_bg_size: e.target.value }))}
                                                 className="text-xs font-bold text-blue-600 bg-transparent border-none focus:ring-0 cursor-pointer text-right"
                                             >
-                                                <option value="cover">Cover (Fill)</option>
-                                                <option value="contain">Contain (Fit)</option>
-                                                <option value="auto">Auto (Original)</option>
+                                                <option value="cover">{t('admin.settings_panel.cover_fill')}</option>
+                                                <option value="contain">{t('admin.settings_panel.contain_fit')}</option>
+                                                <option value="auto">{t('admin.settings_panel.auto_original')}</option>
                                             </select>
                                         </div>
 
                                         {/* Repeat Mode */}
                                         <div className="flex items-center justify-between bg-white/50 p-3 rounded-lg">
-                                            <span className="text-sm text-gray-600 font-medium">Repeat</span>
+                                            <span className="text-sm text-gray-600 font-medium">{t('admin.settings_panel.repeat')}</span>
                                             <select
                                                 value={settings.landing_bg_repeat}
                                                 onChange={(e) => setSettings(s => ({ ...s, landing_bg_repeat: e.target.value }))}
                                                 className="text-xs font-bold text-blue-600 bg-transparent border-none focus:ring-0 cursor-pointer text-right"
                                             >
-                                                <option value="no-repeat">No Repeat</option>
-                                                <option value="repeat">Repeat (Tile)</option>
-                                                <option value="repeat-x">Repeat X</option>
-                                                <option value="repeat-y">Repeat Y</option>
+                                                <option value="no-repeat">{t('admin.settings_panel.no_repeat')}</option>
+                                                <option value="repeat">{t('admin.settings_panel.repeat_tile')}</option>
+                                                <option value="repeat-x">{t('admin.settings_panel.repeat_x')}</option>
+                                                <option value="repeat-y">{t('admin.settings_panel.repeat_y')}</option>
                                             </select>
                                         </div>
                                     </div>
@@ -506,7 +507,7 @@ export const SettingsPanel = () => {
                         disabled={saving}
                         className="neo-btn text-blue-600 px-8"
                     >
-                        {saving ? "Saving..." : "Save Changes"}
+                        {saving ? t('admin.settings_panel.saving') : t('common.save')}
                     </button>
                 </div>
             </div>
@@ -516,10 +517,10 @@ export const SettingsPanel = () => {
     const renderSecuritySettings = () => (
         <div className="space-y-8">
             <div className="pb-8 border-b border-white/50">
-                <h3 className="text-md font-semibold text-gray-600 mb-4">Update Email</h3>
+                <h3 className="text-md font-semibold text-gray-600 mb-4">{t('admin.settings_panel.update_email')}</h3>
                 <div className="flex flex-col md:flex-row gap-4 items-end max-w-xl">
                     <div className="flex-1 w-full">
-                        <label className="block text-sm font-medium text-gray-500 mb-2 pl-2">Admin Email</label>
+                        <label className="block text-sm font-medium text-gray-500 mb-2 pl-2">{t('admin.settings_panel.admin_email')}</label>
                         <input
                             type="email"
                             value={email}
@@ -532,19 +533,19 @@ export const SettingsPanel = () => {
                         disabled={saving}
                         className="neo-btn text-blue-500 whitespace-nowrap"
                     >
-                        Update Email
+                        {t('admin.settings_panel.update_email_btn')}
                     </button>
                 </div>
                 <p className="text-xs text-gray-400 mt-3 pl-2">
-                    Note: You will receive a confirmation email to both the old and new addresses.
+                    {t('admin.settings_panel.email_note')}
                 </p>
             </div>
 
             <div>
-                <h3 className="text-md font-semibold text-gray-600 mb-4">Change Password</h3>
+                <h3 className="text-md font-semibold text-gray-600 mb-4">{t('admin.settings_panel.change_password')}</h3>
                 <div className="space-y-6 max-w-xl">
                     <div>
-                        <label className="block text-sm font-medium text-gray-500 mb-2 pl-2">New Password</label>
+                        <label className="block text-sm font-medium text-gray-500 mb-2 pl-2">{t('admin.settings_panel.new_password')}</label>
                         <input
                             type="password"
                             value={passwords.newPassword}
@@ -553,7 +554,7 @@ export const SettingsPanel = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-500 mb-2 pl-2">Confirm Password</label>
+                        <label className="block text-sm font-medium text-gray-500 mb-2 pl-2">{t('admin.settings_panel.confirm_password')}</label>
                         <input
                             type="password"
                             value={passwords.confirmPassword}
@@ -569,7 +570,7 @@ export const SettingsPanel = () => {
                             disabled={saving}
                             className="neo-btn text-red-500 px-6"
                         >
-                            Update Password
+                            {t('admin.settings_panel.update_password')}
                         </button>
                     </div>
                 </div>
@@ -580,37 +581,37 @@ export const SettingsPanel = () => {
     const accordionSections = [
         {
             id: "general",
-            label: "General Information",
+            label: t('admin.settings_panel.general_info'),
             icon: "⚙️",
-            description: "Platform name, logo, and description",
+            description: t('admin.settings_panel.general_desc'),
             component: renderGeneralSettings()
         },
         {
             id: "appearance",
-            label: "Appearance",
+            label: t('admin.settings_panel.appearance'),
             icon: "🎨",
-            description: "Themes and visual customization",
+            description: t('admin.settings_panel.appearance_desc'),
             component: renderAppearanceSettings()
         },
         {
             id: "security",
-            label: "Security",
+            label: t('admin.settings_panel.security'),
             icon: "🔒",
-            description: "Email and password management",
+            description: t('admin.settings_panel.security_desc'),
             component: renderSecuritySettings()
         },
         {
             id: "notifications",
-            label: "Notifications",
+            label: t('admin.settings_panel.notifications'),
             icon: "🔔",
-            description: "Manage push notifications",
+            description: t('admin.settings_panel.notifications_desc'),
             component: <NotificationManager />
         }
     ];
 
     return (
         <div className="flex-1 overflow-y-auto p-8 max-w-4xl mx-auto bg-[#e0e5ec]">
-            <h1 className="text-2xl font-bold text-gray-700 mb-6 tracking-tight">Platform Settings</h1>
+            <h1 className="text-2xl font-bold text-gray-700 mb-6 tracking-tight">{t('admin.settings_panel.platform_settings')}</h1>
 
             <div className="space-y-6 pb-20">
                 {accordionSections.map((section) => (
@@ -631,7 +632,7 @@ export const SettingsPanel = () => {
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className={`text-sm font-medium ${openSections[section.id] ? 'text-blue-500' : 'text-gray-400'}`}>
-                                    {openSections[section.id] ? 'Collapse' : 'Expand'}
+                                    {openSections[section.id] ? t('admin.settings_panel.collapse') : t('admin.settings_panel.expand')}
                                 </span>
                                 <svg
                                     className={`w-6 h-6 text-gray-500 transition-transform duration-300 ${openSections[section.id] ? 'rotate-180' : ''}`}
