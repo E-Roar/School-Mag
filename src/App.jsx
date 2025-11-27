@@ -4,6 +4,7 @@ import { BookDataProvider } from "./context/BookDataContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { FullPageLoader } from "./components/CircularLoader";
 import { NotificationCenter } from "./components/NotificationCenter";
+import { DynamicHead } from "./components/DynamicHead";
 
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -18,6 +19,7 @@ function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <NotificationProvider>
+          <DynamicHead />
           <Suspense fallback={<FullPageLoader />}>
             <Routes>
               {/* New Landing Page */}
