@@ -159,3 +159,59 @@ img {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ========================================
+   RTL Text Support (Text Only, Not UI)
+   ======================================== */
+
+/* 
+ * For Arabic language: apply RTL text direction to content areas
+ * WITHOUT flipping the entire UI layout (buttons, navigation, etc.)
+ */
+
+/* Text content in Arabic should be RTL aligned */
+body.lang-ar .content-text,
+body.lang-ar p,
+body.lang-ar h1,
+body.lang-ar h2,
+body.lang-ar h3,
+body.lang-ar h4,
+body.lang-ar h5,
+body.lang-ar h6,
+body.lang-ar .text-content,
+body.lang-ar .rtl-text {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Keep UI elements (buttons, inputs, navigation) in LTR */
+body.lang-ar button,
+body.lang-ar .nav,
+body.lang-ar nav,
+body.lang-ar .menu,
+body.lang-ar .toolbar,
+body.lang-ar input,
+body.lang-ar select,
+body.lang-ar .ui-element {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Exception: Keep flex/grid containers in normal flow */
+body.lang-ar .flex,
+body.lang-ar .grid,
+body.lang-ar [class*="flex"],
+body.lang-ar [class*="grid"] {
+  direction: ltr;
+}
+
+/* Allow specific elements to opt-in to RTL if needed */
+.force-rtl {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+.force-ltr {
+  direction: ltr !important;
+  text-align: left !important;
+}

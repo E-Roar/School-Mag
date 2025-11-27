@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useBookData } from "../../context/BookDataContext";
+import { useTranslation } from 'react-i18next';
 
 export const Sidebar = () => {
+    const { t } = useTranslation();
     const { books, selectedBook, setActiveBookId, createNewBook, deleteBook, cleanupEmptyBooks, isDemoMode } = useBookData();
     const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -30,8 +32,8 @@ export const Sidebar = () => {
             {!isCollapsed && (
                 <>
                     <div className="p-6">
-                        <h2 className="text-xl font-bold text-gray-700 tracking-tight">Library</h2>
-                        <p className="text-xs text-gray-400 uppercase tracking-widest mt-1">Manage Issues</p>
+                        <h2 className="text-xl font-bold text-gray-700 tracking-tight">{t('nav.library')}</h2>
+                        <p className="text-xs text-gray-400 uppercase tracking-widest mt-1">{t('admin.issues')}</p>
                     </div>
 
                     <div className="px-4 pb-4">
@@ -39,14 +41,14 @@ export const Sidebar = () => {
                             id="sidebar-new-issue-btn"
                             onClick={() => {
                                 if (isDemoMode) return;
-                                if (confirm("Create a new issue?")) {
+                                if (confirm(t('admin.create_new') + "?")) {
                                     createNewBook();
                                 }
                             }}
                             disabled={isDemoMode}
                             className={`neo-btn w-full flex items-center justify-center gap-2 ${isDemoMode ? "text-gray-400 cursor-not-allowed opacity-60" : "text-blue-600"}`}
                         >
-                            <span>+</span> New Issue
+                            <span>+</span> {t('admin.create_new')}
                         </button>
                     </div>
                 </>
@@ -88,7 +90,7 @@ export const Sidebar = () => {
                                             {book.title}
                                         </p>
                                         <p className="text-xs text-gray-400 truncate">
-                                            {book.is_published ? "🟢 Published" : "Draft"}
+                                            {book.is_published ? t('admin.issue_details.published') : t('admin.issue_details.draft')}
                                         </p>
                                     </div>
                                 </div>
@@ -98,7 +100,7 @@ export const Sidebar = () => {
                                         className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-red-500 hover:bg-[#e0e5ec] rounded-full shadow-[3px_3px_6px_rgba(163,177,198,0.6),-3px_-3px_6px_rgba(255,255,255,0.8)] transition-all"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            if (confirm(`Delete "${book.title}"?`)) {
+                                            if (confirm(`${t('common.delete')} "${book.title}"?`)) {
                                                 deleteBook(book.id);
                                             }
                                         }}
@@ -122,14 +124,14 @@ export const Sidebar = () => {
                         id="sidebar-clean-issues-btn"
                         onClick={() => {
                             if (isDemoMode) return;
-                            if (confirm("Remove all untitled/empty issues?")) {
+                            if (confirm(t('admin.clean_up') + "?")) {
                                 cleanupEmptyBooks();
                             }
                         }}
                         disabled={isDemoMode}
                         className={`neo-btn w-full text-sm ${isDemoMode ? "text-gray-400 cursor-not-allowed opacity-60" : "text-orange-600"}`}
                     >
-                        🧹 Clean Up Issues
+                        🧹 {t('admin.clean_up')}
                     </button>
                 </div>
             )}

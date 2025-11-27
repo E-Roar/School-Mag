@@ -5,6 +5,7 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App";
 import "./index.css";
 import "./styles/neomorphism.css";
+import "./i18n";
 
 const queryClient = new QueryClient({
   defaultOptions: {

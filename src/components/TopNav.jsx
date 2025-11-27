@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { likeBook, unlikeBook, hasLikedBook } from '../lib/supabaseQueries';
+import { useTranslation } from 'react-i18next';
 
 export const TopNav = ({ bookId, bookTitle }) => {
+    const { t } = useTranslation();
     const [isLiked, setIsLiked] = useState(false);
     const [likesCount, setLikesCount] = useState(0);
     const [isAnimating, setIsAnimating] = useState(false);
@@ -47,7 +49,7 @@ export const TopNav = ({ bookId, bookTitle }) => {
                 <Link
                     to="/"
                     className="flex items-center gap-2 uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[10px] sm:text-xs px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/40 hover:border-white hover:bg-white/10 transition-all whitespace-nowrap"
-                    title="Back to Library"
+                    title={t('nav.back_to_site')}
                 >
                     <svg
                         className="w-3 h-3 sm:w-4 sm:h-4"
@@ -57,7 +59,7 @@ export const TopNav = ({ bookId, bookTitle }) => {
                     >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
-                    <span className="hidden sm:inline">Home</span>
+                    <span className="hidden sm:inline">{t('nav.home')}</span>
                 </Link>
 
                 {/* Book Title (Hidden on very small screens) */}
@@ -71,10 +73,10 @@ export const TopNav = ({ bookId, bookTitle }) => {
                 <button
                     onClick={handleLike}
                     className={`flex items-center gap-2 uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[10px] sm:text-xs px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border transition-all whitespace-nowrap ${isLiked
-                            ? 'border-pink-500 bg-pink-500/20 text-pink-300'
-                            : 'border-white/40 hover:border-pink-400 hover:bg-pink-500/10'
+                        ? 'border-pink-500 bg-pink-500/20 text-pink-300'
+                        : 'border-white/40 hover:border-pink-400 hover:bg-pink-500/10'
                         }`}
-                    title={isLiked ? 'Unlike' : 'Like this issue'}
+                    title={isLiked ? t('common.like') : t('common.like')}
                 >
                     <svg
                         className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${isAnimating ? 'scale-125' : 'scale-100'
@@ -90,7 +92,7 @@ export const TopNav = ({ bookId, bookTitle }) => {
                             d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                         />
                     </svg>
-                    <span className="hidden sm:inline">{isLiked ? 'Liked' : 'Like'}</span>
+                    <span className="hidden sm:inline">{isLiked ? t('common.likes') : t('common.like')}</span>
                     {likesCount > 0 && (
                         <span className="font-bold">{likesCount}</span>
                     )}

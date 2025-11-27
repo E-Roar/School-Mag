@@ -3,10 +3,13 @@ import { NeomorphicLogo } from "../NeomorphicLogo";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { MobileMenu, MobileMenuItem } from "../MobileMenu";
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from "../LanguageSwitcher";
 
 import { useBookData } from "../../context/BookDataContext";
 
 export const TopNav = ({ currentView, onViewChange }) => {
+    const { t } = useTranslation();
     const { isDemoMode } = useBookData();
     const [settings, setSettings] = useState({
         school_logo_url: "",
@@ -43,9 +46,9 @@ export const TopNav = ({ currentView, onViewChange }) => {
     };
 
     const navItems = [
-        { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-        { id: 'issues', label: 'Issues', icon: '📚' },
-        { id: 'settings', label: 'Settings', icon: '⚙️' },
+        { id: 'dashboard', label: t('admin.dashboard'), icon: '📊' },
+        { id: 'issues', label: t('admin.issues'), icon: '📚' },
+        { id: 'settings', label: t('admin.settings'), icon: '⚙️' },
     ];
 
     return (
@@ -86,6 +89,7 @@ export const TopNav = ({ currentView, onViewChange }) => {
 
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-4">
+                <LanguageSwitcher />
                 {isDemoMode && (
                     <button
                         onClick={() => window.dispatchEvent(new CustomEvent('start-tour'))}
@@ -98,13 +102,13 @@ export const TopNav = ({ currentView, onViewChange }) => {
                     to="/"
                     className="neo-btn text-blue-500 hover:text-blue-600 text-xs px-4 py-2 hover:scale-105 transition-transform"
                 >
-                    🏠 Back Home
+                    🏠 {t('nav.back_to_site')}
                 </Link>
                 <button
                     onClick={handleLogout}
                     className="neo-btn text-red-500 hover:text-red-600 text-xs px-4 py-2"
                 >
-                    Logout
+                    {t('nav.logout')}
                 </button>
             </div>
 

@@ -4,6 +4,7 @@ import { useBookData } from "../context/BookDataContext";
 import { defaultVisualSettings } from "../data/defaultBooks";
 import { useAnalytics } from "../hooks/useAnalytics";
 import { pageAtom } from "../store";
+import { useTranslation } from 'react-i18next';
 
 
 const MarqueeRow = ({ items, settings, reverse }) => {
@@ -35,6 +36,7 @@ const MarqueeRow = ({ items, settings, reverse }) => {
 };
 
 export const UI = ({ analytics }) => {
+  const { t } = useTranslation();
   const { selectedBook } = useBookData();
   const [page, setPage] = useAtom(pageAtom);
   const pages = selectedBook?.pages ?? [];
@@ -160,8 +162,8 @@ export const UI = ({ analytics }) => {
 
   const pageLabel =
     page === 0
-      ? "Cover"
-      : `Page ${page}`;
+      ? t('book.cover')
+      : t('book.page_num', { count: page });
 
   return (
     <>
@@ -174,14 +176,14 @@ export const UI = ({ analytics }) => {
                 }`}
               onClick={goToCover}
             >
-              Cover
+              {t('book.cover')}
             </button>
             <button
               className="uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[10px] sm:text-xs px-2 sm:px-3 py-1.5 sm:py-2 rounded-full border border-white/40 hover:border-white whitespace-nowrap"
               onClick={handlePrev}
               disabled={isRTL ? page === pages.length : page === 0}
             >
-              Prev
+              {t('book.prev')}
             </button>
             <div className="min-w-[80px] sm:min-w-[120px] text-center font-semibold uppercase tracking-[0.2em] sm:tracking-[0.4em] text-[10px] sm:text-xs whitespace-nowrap">
               {pageLabel}
@@ -191,7 +193,7 @@ export const UI = ({ analytics }) => {
               onClick={handleNext}
               disabled={isRTL ? page === 0 : page === pages.length}
             >
-              Next
+              {t('book.next')}
             </button>
           </div>
         </div>
