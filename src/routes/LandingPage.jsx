@@ -18,7 +18,11 @@ export const LandingPage = () => {
     const [settings, setSettings] = useState({
         school_name: "E-Roar Magazine",
         school_logo_url: "",
-        school_description: ""
+        school_description: "",
+        landing_bg_url: "",
+        landing_bg_fixed: true,
+        landing_bg_size: "cover",
+        landing_bg_repeat: "no-repeat"
     });
     const [suggestion, setSuggestion] = useState("");
     const [suggestionStatus, setSuggestionStatus] = useState(""); // idle, submitting, success, error
@@ -31,7 +35,10 @@ export const LandingPage = () => {
                     .select('*')
                     .maybeSingle();
                 if (data) {
-                    setSettings(data);
+                    setSettings(prev => ({
+                        ...prev,
+                        ...data
+                    }));
                     if (data.school_name) {
                         document.title = data.school_name;
                     }
@@ -109,9 +116,18 @@ export const LandingPage = () => {
     }
 
     return (
-        <div className="neo-page min-h-screen flex flex-col font-sans text-gray-700">
-            {/* Top Navigation Bar */}
-            <nav className="sticky top-0 z-50 px-4 py-4 bg-[#e0e5ec]/90 backdrop-blur-md transition-all duration-300 relative">
+        <div
+            className="neo-page min-h-screen flex flex-col font-sans text-gray-700"
+            style={{
+                backgroundImage: settings.landing_bg_url ? `url(${settings.landing_bg_url})` : undefined,
+                backgroundAttachment: settings.landing_bg_fixed ? 'fixed' : 'scroll',
+                backgroundSize: settings.landing_bg_size,
+                backgroundRepeat: settings.landing_bg_repeat,
+                backgroundPosition: 'center'
+            }}
+        >
+            {/* Top Navigation Bar - Solid Neomorphic (No Glass) */}
+            <nav className="sticky top-0 z-50 px-4 py-4 bg-[#e0e5ec] transition-all duration-300 relative shadow-sm">
                 <div className="neo-card max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between gap-4">
                     {/* Logo & Name */}
                     <div className="flex items-center gap-3 cursor-pointer group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
@@ -189,7 +205,7 @@ export const LandingPage = () => {
                         </MobileMenu>
                     </div>
                 </div>
-            </nav>
+            </nav >
 
             <main className="flex-1 max-w-7xl mx-auto w-full px-4 space-y-24 py-12">
 

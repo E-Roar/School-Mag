@@ -4,6 +4,7 @@ import { Editor } from "../components/admin/Editor";
 import { TopNav } from "../components/admin/TopNav";
 import { DashboardOverview } from "../components/admin/DashboardOverview";
 import { SettingsPanel } from "../components/admin/SettingsPanel";
+import { SuggestionsPanel } from "../components/admin/SuggestionsPanel";
 import { OnboardingTour } from "../components/admin/OnboardingTour";
 import { useBookData } from "../context/BookDataContext";
 
@@ -41,6 +42,8 @@ export const AdminDashboard = () => {
                         <Editor />
                     </>
                 )}
+
+                {currentView === 'suggestions' && <SuggestionsPanel />}
 
                 {currentView === 'settings' && <SettingsPanel />}
             </div>

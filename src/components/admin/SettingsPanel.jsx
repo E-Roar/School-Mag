@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { logActivity } from "../../lib/logger";
 import { validateLogoFile, generateLogoVariants } from "../../utils/logoCompression";
+import { compressImage } from "../../utils/imageCompression";
 import { NotificationManager } from "./NotificationManager";
 
 export const SettingsPanel = () => {
@@ -9,7 +10,12 @@ export const SettingsPanel = () => {
         school_name: "",
         school_description: "",
         school_logo_url: "",
-        logo_size: 48 // Default size in pixels
+        logo_size: 48, // Default size in pixels
+        enable_space_theme: false, // Deprecated but kept for schema compatibility
+        landing_bg_url: "",
+        landing_bg_fixed: true,
+        landing_bg_size: "cover",
+        landing_bg_repeat: "no-repeat"
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -26,6 +32,7 @@ export const SettingsPanel = () => {
     // Accordion State
     const [openSections, setOpenSections] = useState({
         general: false,
+        appearance: false,
         security: false,
         notifications: false
     });
@@ -126,6 +133,49 @@ export const SettingsPanel = () => {
         }
     };
 
+    const handleBackgroundUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setSaving(true);
+        setUploadProgress("Compressing background...");
+        setMessage("");
+
+        try {
+            // Compress and convert to WebP
+            const compressedFile = await compressImage(file, 1920, 0.8);
+
+            setUploadProgress("Uploading background...");
+            const timestamp = Date.now();
+            const path = `backgrounds/landing-bg-${timestamp}.webp`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('pages') // Reuse pages bucket or assets
+                .upload(path, compressedFile);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('pages')
+                .getPublicUrl(path);
+
+            setSettings(prev => ({
+                ...prev,
+                landing_bg_url: publicUrl
+            }));
+
+            setUploadProgress(null);
+            setMessage("✓ Background uploaded! Don't forget to save.");
+            logActivity("Uploaded Landing Background");
+        } catch (error) {
+            console.error("Error uploading background:", error);
+            setMessage("Error uploading background: " + error.message);
+            setUploadProgress(null);
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleSaveSettings = async () => {
         setSaving(true);
         setMessage("");
@@ -141,6 +191,11 @@ export const SettingsPanel = () => {
                 school_logo_thumbnail: settings.school_logo_thumbnail,
                 school_logo_og: settings.school_logo_og,
                 logo_size: settings.logo_size || 48,
+                enable_space_theme: false, // Force disable space theme
+                landing_bg_url: settings.landing_bg_url,
+                landing_bg_fixed: settings.landing_bg_fixed,
+                landing_bg_size: settings.landing_bg_size,
+                landing_bg_repeat: settings.landing_bg_repeat,
                 updated_at: new Date().toISOString()
             };
 
@@ -338,6 +393,126 @@ export const SettingsPanel = () => {
         </div>
     );
 
+    const renderAppearanceSettings = () => (
+        <div className="space-y-6">
+            <div className="space-y-8">
+                <div>
+                    <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                            <h3 className="text-md font-semibold text-gray-600 mb-2">🖼️ Landing Page Background</h3>
+                            <p className="text-sm text-gray-500 leading-relaxed">
+                                Upload a custom background image for the landing page.
+                                Images are automatically compressed to WebP for performance.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Background Upload */}
+                    <div className="p-6 rounded-2xl bg-[#e0e5ec] shadow-[inset_3px_3px_6px_rgba(163,177,198,0.4),inset_-3px_-3px_6px_rgba(255,255,255,0.7)] space-y-6">
+
+                        {/* Image Preview & Upload */}
+                        <div className="flex flex-col md:flex-row gap-6 items-start">
+                            <div className="w-full md:w-1/3 aspect-video rounded-xl bg-gray-200 overflow-hidden shadow-inner flex items-center justify-center relative group">
+                                {settings.landing_bg_url ? (
+                                    <>
+                                        <img
+                                            src={settings.landing_bg_url}
+                                            alt="Background"
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <button
+                                            onClick={() => setSettings(s => ({ ...s, landing_bg_url: "" }))}
+                                            className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                            title="Remove Image"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                        </button>
+                                    </>
+                                ) : (
+                                    <span className="text-gray-400 text-sm">No Image Set</span>
+                                )}
+                            </div>
+
+                            <div className="flex-1 space-y-4">
+                                <div>
+                                    <label className="neo-btn cursor-pointer inline-flex items-center gap-2 text-sm text-blue-600 px-6 py-3 hover:scale-105 transition-transform">
+                                        <span>📤 {uploadProgress && uploadProgress.includes('background') ? 'Processing...' : 'Upload Background Image'}</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handleBackgroundUpload}
+                                            disabled={saving}
+                                        />
+                                    </label>
+                                    <p className="text-xs text-gray-400 mt-2">
+                                        Recommended: 1920x1080px or larger.
+                                    </p>
+                                </div>
+
+                                {/* Settings Controls */}
+                                {settings.landing_bg_url && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-300/50">
+                                        {/* Fixed vs Scroll */}
+                                        <div className="flex items-center justify-between bg-white/50 p-3 rounded-lg">
+                                            <span className="text-sm text-gray-600 font-medium">Attachment</span>
+                                            <button
+                                                onClick={() => setSettings(s => ({ ...s, landing_bg_fixed: !s.landing_bg_fixed }))}
+                                                className="text-xs font-bold text-blue-600 bg-blue-100 px-3 py-1 rounded-full hover:bg-blue-200 transition-colors"
+                                            >
+                                                {settings.landing_bg_fixed ? "Fixed (Parallax)" : "Scrollable"}
+                                            </button>
+                                        </div>
+
+                                        {/* Size Mode */}
+                                        <div className="flex items-center justify-between bg-white/50 p-3 rounded-lg">
+                                            <span className="text-sm text-gray-600 font-medium">Size</span>
+                                            <select
+                                                value={settings.landing_bg_size}
+                                                onChange={(e) => setSettings(s => ({ ...s, landing_bg_size: e.target.value }))}
+                                                className="text-xs font-bold text-blue-600 bg-transparent border-none focus:ring-0 cursor-pointer text-right"
+                                            >
+                                                <option value="cover">Cover (Fill)</option>
+                                                <option value="contain">Contain (Fit)</option>
+                                                <option value="auto">Auto (Original)</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Repeat Mode */}
+                                        <div className="flex items-center justify-between bg-white/50 p-3 rounded-lg">
+                                            <span className="text-sm text-gray-600 font-medium">Repeat</span>
+                                            <select
+                                                value={settings.landing_bg_repeat}
+                                                onChange={(e) => setSettings(s => ({ ...s, landing_bg_repeat: e.target.value }))}
+                                                className="text-xs font-bold text-blue-600 bg-transparent border-none focus:ring-0 cursor-pointer text-right"
+                                            >
+                                                <option value="no-repeat">No Repeat</option>
+                                                <option value="repeat">Repeat (Tile)</option>
+                                                <option value="repeat-x">Repeat X</option>
+                                                <option value="repeat-y">Repeat Y</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-4">
+                    <p className={`text-sm font-medium ${message.includes("Error") ? "text-red-500" : "text-green-500"}`}>{message}</p>
+                    <button
+                        onClick={handleSaveSettings}
+                        disabled={saving}
+                        className="neo-btn text-blue-600 px-8"
+                    >
+                        {saving ? "Saving..." : "Save Changes"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+
     const renderSecuritySettings = () => (
         <div className="space-y-8">
             <div className="pb-8 border-b border-white/50">
@@ -409,6 +584,13 @@ export const SettingsPanel = () => {
             icon: "⚙️",
             description: "Platform name, logo, and description",
             component: renderGeneralSettings()
+        },
+        {
+            id: "appearance",
+            label: "Appearance",
+            icon: "🎨",
+            description: "Themes and visual customization",
+            component: renderAppearanceSettings()
         },
         {
             id: "security",

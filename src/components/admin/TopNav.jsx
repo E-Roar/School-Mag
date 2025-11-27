@@ -48,6 +48,7 @@ export const TopNav = ({ currentView, onViewChange }) => {
     const navItems = [
         { id: 'dashboard', label: t('admin.dashboard'), icon: '📊' },
         { id: 'issues', label: t('admin.issues'), icon: '📚' },
+        { id: 'suggestions', label: 'Suggestions', icon: '💬' },
         { id: 'settings', label: t('admin.settings'), icon: '⚙️' },
     ];
 
