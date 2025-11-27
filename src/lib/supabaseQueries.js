@@ -37,10 +37,10 @@ const transformPage = (page) => {
   return {
     frontSrc: page.front_asset_path
       ? getSignedUrl('pages', page.front_asset_path) + cacheBuster
-      : defaultPlaceholder,
+      : null,
     backSrc: page.back_asset_path
       ? getSignedUrl('pages', page.back_asset_path) + cacheBuster
-      : defaultPlaceholder,
+      : null,
     label: page.label || `Page ${page.page_number}`,
     // Pass raw paths for admin usage if needed
     frontPath: page.front_asset_path,

@@ -2,25 +2,12 @@ import { defaultPagePlaceholder, defaultVisualSettings } from "../data/defaultBo
 
 export const normalizePages = (pages) => {
     if (!pages || pages.length === 0) return [];
-    // Ensure cover (page 0) exists
-    const hasCover = pages.some((p) => p.page_number === 0 || p.label === "Cover");
-    if (!hasCover) {
-        return [
-            {
-                frontSrc: defaultPagePlaceholder,
-                backSrc: defaultPagePlaceholder,
-                label: "Cover",
-                page_number: 0,
-            },
-            ...pages,
-        ];
-    }
     return pages;
 };
 
 export const createBlankSpread = (spreadNumber) => ({
-    frontSrc: defaultPagePlaceholder,
-    backSrc: defaultPagePlaceholder,
+    frontSrc: null,
+    backSrc: null,
     label: `New Spread ${spreadNumber}`,
 });
 

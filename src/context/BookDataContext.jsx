@@ -87,7 +87,10 @@ export const BookDataProvider = ({ children, isAdminMode = false, isDemoMode = f
 
   const updatePageImageMutation = useMutation({
     mutationFn: async ({ bookId, pageIndex, side, file }) => {
-      if (isDemoMode) throw new Error("Changes cannot be saved in Demo Mode");
+      if (isDemoMode) {
+        console.warn("Action blocked: Demo Mode is active");
+        throw new Error("Changes cannot be saved in Demo Mode");
+      }
       const book = books.find((b) => b.id === bookId);
       if (!book) throw new Error('Book not found');
 
@@ -97,7 +100,7 @@ export const BookDataProvider = ({ children, isAdminMode = false, isDemoMode = f
       // If it's a URL string, update database with that URL (or null if empty)
       if (typeof file === "string") {
         if (isSupabaseConfigured && supabase) {
-          const pageNumber = pageIndex;
+          const pageNumber = page.page_number !== undefined ? page.page_number : pageIndex;
           const fieldName = side === "front" ? "front_asset_path" : "back_asset_path";
 
           let path = file;
@@ -124,7 +127,8 @@ export const BookDataProvider = ({ children, isAdminMode = false, isDemoMode = f
       // Upload to Supabase Storage
       if (isSupabaseConfigured && supabase && file) {
         try {
-          const url = await uploadPageImage(file, bookId, pageIndex, side);
+          const pageNumber = page.page_number !== undefined ? page.page_number : pageIndex;
+          const url = await uploadPageImage(file, bookId, pageNumber, side);
 
           // Check if upload actually succeeded
           if (!url || url.includes('blob:')) {
@@ -132,9 +136,8 @@ export const BookDataProvider = ({ children, isAdminMode = false, isDemoMode = f
           }
 
           // Update database - always use .webp extension now
-          const pageNumber = pageIndex;
           const fieldName = side === "front" ? "front_asset_path" : "back_asset_path";
-          const path = `${bookId}/${pageIndex}-${side}.webp`;
+          const path = `${bookId}/${pageNumber}-${side}.webp`;
 
           const { error } = await supabase
             .from("pages")
@@ -223,8 +226,8 @@ export const BookDataProvider = ({ children, isAdminMode = false, isDemoMode = f
 
         if (queryError) throw queryError;
 
-        // If book has 0 pages, start from 0, otherwise increment from max
-        const nextPageNumber = maxPageData?.page_number !== undefined ? maxPageData.page_number + 1 : 0;
+        // If book has 0 pages, start from 1, otherwise increment from max
+        const nextPageNumber = maxPageData?.page_number !== undefined ? maxPageData.page_number + 1 : 1;
 
         // 2. Insert the new page at the end
         const { data, error } = await supabase
@@ -267,8 +270,8 @@ export const BookDataProvider = ({ children, isAdminMode = false, isDemoMode = f
             book_id: bookId,
             page_number: newPageNumber,
             label: `Spread ${newPageNumber}`,
-            frontSrc: defaultPagePlaceholder,
-            backSrc: defaultPagePlaceholder,
+            frontSrc: null,
+            backSrc: null,
             front_asset_path: null,
             back_asset_path: null
           };
@@ -296,7 +299,10 @@ export const BookDataProvider = ({ children, isAdminMode = false, isDemoMode = f
 
   const removePageMutation = useMutation({
     mutationFn: async ({ bookId, pageIndex }) => {
-      if (isDemoMode) throw new Error("Changes cannot be saved in Demo Mode");
+      if (isDemoMode) {
+        console.warn("Remove Page blocked: Demo Mode is active");
+        throw new Error("Changes cannot be saved in Demo Mode");
+      }
       const book = books.find((b) => b.id === bookId);
       if (!book) {
         throw new Error("Book not found");
@@ -566,8 +572,8 @@ export const BookDataProvider = ({ children, isAdminMode = false, isDemoMode = f
 
       if (queryError) throw queryError;
 
-      // If book has 0 pages, start from 0, otherwise start from max + 1
-      let nextPageNumber = maxPageData?.page_number !== undefined ? maxPageData.page_number + 1 : 0;
+      // If book has 0 pages, start from 1, otherwise start from max + 1
+      let nextPageNumber = maxPageData?.page_number !== undefined ? maxPageData.page_number + 1 : 1;
       console.log(`[importPdfPages] Starting page number: ${nextPageNumber}`);
 
       // 2. Loop through files in pairs

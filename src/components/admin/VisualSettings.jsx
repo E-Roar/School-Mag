@@ -1,24 +1,79 @@
+import { useState, useEffect } from "react";
 import { useBookData } from "../../context/BookDataContext";
 
 export const VisualSettings = ({ book }) => {
     const { updateVisualSettings } = useBookData();
-    const settings = book.visualSettings || {};
+    const [settings, setSettings] = useState({
+        direction: 'ltr',
+        gradientStart: '#ffffff',
+        gradientEnd: '#ffffff',
+        floatIntensity: 0,
+        floatSpeed: 0,
+        rotationIntensity: 0,
+        marqueeTexts: [],
+        marqueeFontFamily: '',
+        marqueeColor: '#000000',
+        marqueeSpeed: 0
+    });
+    const [isDirty, setIsDirty] = useState(false);
+
+    useEffect(() => {
+        if (book?.visualSettings) {
+            setSettings({
+                direction: book.visualSettings.direction ?? 'ltr',
+                gradientStart: book.visualSettings.gradientStart ?? '#ffffff',
+                gradientEnd: book.visualSettings.gradientEnd ?? '#ffffff',
+                floatIntensity: book.visualSettings.floatIntensity ?? 0,
+                floatSpeed: book.visualSettings.floatSpeed ?? 0,
+                rotationIntensity: book.visualSettings.rotationIntensity ?? 0,
+                marqueeTexts: book.visualSettings.marqueeTexts ?? [],
+                marqueeFontFamily: book.visualSettings.marqueeFontFamily ?? '',
+                marqueeColor: book.visualSettings.marqueeColor ?? '#000000',
+                marqueeSpeed: book.visualSettings.marqueeSpeed ?? 0
+            });
+            setIsDirty(false);
+        }
+    }, [book]);
 
     const handleChange = (field, value) => {
-        updateVisualSettings(book.id, { [field]: value });
+        setSettings(prev => ({ ...prev, [field]: value }));
+        setIsDirty(true);
     };
 
     const handleTextsChange = (value) => {
-        const list = value.split("\n").map((line) => line.trim()).filter(Boolean);
-        updateVisualSettings(book.id, { marqueeTexts: list });
+        const list = value.split("\n"); // Keep empty lines while typing
+        setSettings(prev => ({ ...prev, marqueeTexts: list }));
+        setIsDirty(true);
+    };
+
+    const handleSave = () => {
+        // Clean up marquee texts before saving
+        const cleanSettings = {
+            ...settings,
+            marqueeTexts: Array.isArray(settings.marqueeTexts)
+                ? settings.marqueeTexts.map(line => line.trim()).filter(Boolean)
+                : []
+        };
+        updateVisualSettings(book.id, cleanSettings);
+        setIsDirty(false);
     };
 
     return (
         <div className="space-y-6">
             <div className="neo-card p-8 space-y-8">
-                <div className="border-b border-gray-200/50 pb-4">
-                    <h3 className="text-lg font-bold text-gray-700">Scene Appearance</h3>
-                    <p className="text-sm text-gray-500">Customize the 3D viewer environment</p>
+                <div className="flex items-center justify-between border-b border-gray-200/50 pb-4">
+                    <div>
+                        <h3 className="text-lg font-bold text-gray-700">Scene Appearance</h3>
+                        <p className="text-sm text-gray-500">Customize the 3D viewer environment</p>
+                    </div>
+                    {isDirty && (
+                        <button
+                            onClick={handleSave}
+                            className="neo-btn bg-blue-500 text-white px-6 py-2 hover:bg-blue-600 transition-colors animate-pulse"
+                        >
+                            💾 Save Changes
+                        </button>
+                    )}
                 </div>
 
                 {/* RTL Toggle */}
@@ -85,7 +140,7 @@ export const VisualSettings = ({ book }) => {
                             <div className="space-y-2">
                                 <div className="flex justify-between">
                                     <label className="text-xs font-medium text-gray-500">Float Intensity</label>
-                                    <span className="text-xs text-gray-400">{settings.floatIntensity?.toFixed(1)}</span>
+                                    <span className="text-xs text-gray-400">{Number(settings.floatIntensity).toFixed(1)}</span>
                                 </div>
                                 <input
                                     type="range"
@@ -101,7 +156,7 @@ export const VisualSettings = ({ book }) => {
                             <div className="space-y-2">
                                 <div className="flex justify-between">
                                     <label className="text-xs font-medium text-gray-500">Float Speed</label>
-                                    <span className="text-xs text-gray-400">{settings.floatSpeed?.toFixed(1)}</span>
+                                    <span className="text-xs text-gray-400">{Number(settings.floatSpeed).toFixed(1)}</span>
                                 </div>
                                 <input
                                     type="range"
@@ -117,7 +172,7 @@ export const VisualSettings = ({ book }) => {
                             <div className="space-y-2">
                                 <div className="flex justify-between">
                                     <label className="text-xs font-medium text-gray-500">Rotation Intensity</label>
-                                    <span className="text-xs text-gray-400">{settings.rotationIntensity?.toFixed(1)}</span>
+                                    <span className="text-xs text-gray-400">{Number(settings.rotationIntensity).toFixed(1)}</span>
                                 </div>
                                 <input
                                     type="range"
@@ -135,16 +190,26 @@ export const VisualSettings = ({ book }) => {
             </div>
 
             <div className="neo-card p-8 space-y-8">
-                <div className="border-b border-gray-200/50 pb-4">
-                    <h3 className="text-lg font-bold text-gray-700">Marquee Text</h3>
-                    <p className="text-sm text-gray-500">Scrolling text behind the book</p>
+                <div className="flex items-center justify-between border-b border-gray-200/50 pb-4">
+                    <div>
+                        <h3 className="text-lg font-bold text-gray-700">Marquee Text</h3>
+                        <p className="text-sm text-gray-500">Scrolling text behind the book</p>
+                    </div>
+                    {isDirty && (
+                        <button
+                            onClick={handleSave}
+                            className="neo-btn bg-blue-500 text-white px-6 py-2 hover:bg-blue-600 transition-colors animate-pulse"
+                        >
+                            💾 Save Changes
+                        </button>
+                    )}
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-8">
                     <div className="space-y-2">
                         <label className="text-sm font-semibold text-gray-600 pl-2">Text Lines (one per line)</label>
                         <textarea
-                            value={settings.marqueeTexts?.join("\n") ?? ""}
+                            value={Array.isArray(settings.marqueeTexts) ? settings.marqueeTexts.join("\n") : ""}
                             onChange={(e) => handleTextsChange(e.target.value)}
                             rows={6}
                             className="neo-input resize-none font-mono text-sm rounded-2xl"
@@ -157,7 +222,7 @@ export const VisualSettings = ({ book }) => {
                             <label className="text-sm font-semibold text-gray-600 pl-2">Font Family</label>
                             <input
                                 type="text"
-                                value={settings.marqueeFontFamily ?? ""}
+                                value={settings.marqueeFontFamily}
                                 onChange={(e) => handleChange("marqueeFontFamily", e.target.value)}
                                 className="neo-input"
                                 placeholder="'Anton', sans-serif"

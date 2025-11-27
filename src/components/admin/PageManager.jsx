@@ -13,7 +13,7 @@ const PageCard = ({ index, page, bookId, updatePageImage, removePage, canRemove 
         <div className="neo-card p-4 space-y-4">
             <div className="flex items-center justify-between border-b border-gray-200/50 pb-2">
                 <div>
-                    <h4 className="font-bold text-gray-700">Page {index}</h4>
+                    <h4 className="font-bold text-gray-700">Page {index + 1}</h4>
                     <p className="text-xs text-gray-400 uppercase tracking-wider">{page.label}</p>
                 </div>
                 {canRemove && (
@@ -30,11 +30,17 @@ const PageCard = ({ index, page, bookId, updatePageImage, removePage, canRemove 
                 <div className="space-y-3">
                     <p className="text-xs font-semibold text-gray-400 uppercase text-center">Front</p>
                     <div className="aspect-[3/4] bg-[#e0e5ec] rounded-xl overflow-hidden shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] relative group">
-                        <img
-                            src={page.frontSrc}
-                            alt={`Page ${index} Front`}
-                            className="w-full h-full object-cover"
-                        />
+                        {page.frontSrc ? (
+                            <img
+                                src={page.frontSrc}
+                                alt={`Page ${index} Front`}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                <span className="text-6xl opacity-30">📄</span>
+                            </div>
+                        )}
                         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                             <label className="cursor-pointer neo-btn text-xs px-4 py-2 hover:scale-105 transition-transform">
                                 📤 Upload Image
@@ -48,11 +54,17 @@ const PageCard = ({ index, page, bookId, updatePageImage, removePage, canRemove 
                 <div className="space-y-3">
                     <p className="text-xs font-semibold text-gray-400 uppercase text-center">Back</p>
                     <div className="aspect-[3/4] bg-[#e0e5ec] rounded-xl overflow-hidden shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] relative group">
-                        <img
-                            src={page.backSrc}
-                            alt={`Page ${index} Back`}
-                            className="w-full h-full object-cover"
-                        />
+                        {page.backSrc ? (
+                            <img
+                                src={page.backSrc}
+                                alt={`Page ${index} Back`}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                <span className="text-6xl opacity-30">📄</span>
+                            </div>
+                        )}
                         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                             <label className="cursor-pointer neo-btn text-xs px-4 py-2 hover:scale-105 transition-transform">
                                 📤 Upload Image

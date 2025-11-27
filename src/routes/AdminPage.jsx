@@ -51,6 +51,7 @@ export const AdminPage = () => {
 
           if (role === "admin") {
             setIsAuthed(true);
+            setIsDemoMode(false);
           } else {
             console.warn("User does not have admin role:", role);
             setIsAuthed(false);
@@ -132,6 +133,7 @@ export const AdminPage = () => {
 
       if (role === "admin") {
         setIsAuthed(true);
+        setIsDemoMode(false); // Ensure demo mode is off
         setError("");
       } else {
         await supabase.auth.signOut();

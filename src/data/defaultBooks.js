@@ -47,7 +47,7 @@ const buildPagesFromPictures = () => {
     {
       frontSrc: texturePath("book-cover"),
       backSrc: texturePath(pictures[0]),
-      label: "Cover",
+      label: "Spread 1",
     },
   ];
 

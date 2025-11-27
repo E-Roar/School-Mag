@@ -1,22 +1,63 @@
+import { useState, useEffect } from "react";
 import { useBookData } from "../../context/BookDataContext";
 
 export const IssueDetails = ({ book }) => {
     const { updateBookMeta } = useBookData();
+    const [formData, setFormData] = useState({
+        title: "",
+        subtitle: "",
+        issueTag: "",
+        releaseDate: "",
+        is_published: false,
+        listOfContent: ""
+    });
+    const [isDirty, setIsDirty] = useState(false);
+
+    // Sync local state when book changes
+    useEffect(() => {
+        if (book) {
+            setFormData({
+                title: book.title ?? "",
+                subtitle: book.subtitle ?? "",
+                issueTag: book.issueTag ?? "",
+                releaseDate: book.releaseDate ?? "",
+                is_published: book.is_published ?? false,
+                listOfContent: book.listOfContent ?? ""
+            });
+            setIsDirty(false);
+        }
+    }, [book]);
 
     const handleChange = (field, value) => {
-        updateBookMeta(book.id, { [field]: value });
+        setFormData(prev => ({ ...prev, [field]: value }));
+        setIsDirty(true);
+    };
+
+    const handleSave = () => {
+        updateBookMeta(book.id, formData);
+        setIsDirty(false);
     };
 
     return (
         <div className="space-y-6">
             {/* Metadata Card */}
             <div className="neo-card p-6 space-y-6">
-                <div className="flex items-center gap-3 border-b border-gray-200/50 pb-4">
-                    <span className="text-3xl filter drop-shadow-sm">📋</span>
-                    <div>
-                        <h3 className="text-lg font-bold text-gray-700">Basic Information</h3>
-                        <p className="text-sm text-gray-500">Core metadata for this issue</p>
+                <div className="flex items-center justify-between border-b border-gray-200/50 pb-4">
+                    <div className="flex items-center gap-3">
+                        <span className="text-3xl filter drop-shadow-sm">📋</span>
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-700">Basic Information</h3>
+                            <p className="text-sm text-gray-500">Core metadata for this issue</p>
+                        </div>
                     </div>
+                    {isDirty && (
+                        <button
+                            onClick={handleSave}
+                            className="neo-btn bg-blue-500 text-white px-6 py-2 hover:bg-blue-600 transition-colors animate-pulse"
+                        >
+                            💾 Save Changes
+                        </button>
+                    )}
                 </div>
 
                 <div className="grid gap-6">
@@ -29,7 +70,7 @@ export const IssueDetails = ({ book }) => {
                             </label>
                             <input
                                 type="text"
-                                value={book.title ?? ""}
+                                value={formData.title}
                                 onChange={(e) => handleChange("title", e.target.value)}
                                 className="neo-input"
                                 placeholder="e.g. Winter Issue"
@@ -43,7 +84,7 @@ export const IssueDetails = ({ book }) => {
                             </label>
                             <input
                                 type="text"
-                                value={book.subtitle ?? ""}
+                                value={formData.subtitle}
                                 onChange={(e) => handleChange("subtitle", e.target.value)}
                                 className="neo-input"
                                 placeholder="e.g. A collection of stories"
@@ -60,7 +101,7 @@ export const IssueDetails = ({ book }) => {
                             </label>
                             <input
                                 type="text"
-                                value={book.issueTag ?? ""}
+                                value={formData.issueTag}
                                 onChange={(e) => handleChange("issueTag", e.target.value)}
                                 className="neo-input"
                                 placeholder="e.g. Vol. 12"
@@ -74,7 +115,7 @@ export const IssueDetails = ({ book }) => {
                             </label>
                             <input
                                 type="date"
-                                value={book.releaseDate?.slice(0, 10) ?? ""}
+                                value={formData.releaseDate?.slice(0, 10) ?? ""}
                                 onChange={(e) => handleChange("releaseDate", e.target.value)}
                                 className="neo-input"
                             />
@@ -82,13 +123,13 @@ export const IssueDetails = ({ book }) => {
 
                         <div className="space-y-2">
                             <label className="text-sm font-semibold text-gray-600 flex items-center gap-2 pl-2">
-                                <span className={book.is_published ? "text-green-500" : "text-gray-400"}>
-                                    {book.is_published ? "✅" : "📝"}
+                                <span className={formData.is_published ? "text-green-500" : "text-gray-400"}>
+                                    {formData.is_published ? "✅" : "📝"}
                                 </span>
                                 Publication Status
                             </label>
                             <select
-                                value={book.is_published ? "published" : "draft"}
+                                value={formData.is_published ? "published" : "draft"}
                                 onChange={(e) => handleChange("is_published", e.target.value === "published")}
                                 className="neo-input appearance-none"
                             >
@@ -102,12 +143,22 @@ export const IssueDetails = ({ book }) => {
 
             {/* Searchable Content Card */}
             <div className="neo-card p-6 space-y-6">
-                <div className="flex items-center gap-3 border-b border-gray-200/50 pb-4">
-                    <span className="text-3xl filter drop-shadow-sm">🔍</span>
-                    <div>
-                        <h3 className="text-lg font-bold text-gray-700">Searchable Content</h3>
-                        <p className="text-sm text-gray-500">Keywords and content for search functionality</p>
+                <div className="flex items-center justify-between border-b border-gray-200/50 pb-4">
+                    <div className="flex items-center gap-3">
+                        <span className="text-3xl filter drop-shadow-sm">🔍</span>
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-700">Searchable Content</h3>
+                            <p className="text-sm text-gray-500">Keywords and content for search functionality</p>
+                        </div>
                     </div>
+                    {isDirty && (
+                        <button
+                            onClick={handleSave}
+                            className="neo-btn bg-blue-500 text-white px-6 py-2 hover:bg-blue-600 transition-colors animate-pulse"
+                        >
+                            💾 Save Changes
+                        </button>
+                    )}
                 </div>
 
                 <div className="space-y-3">
@@ -119,7 +170,7 @@ export const IssueDetails = ({ book }) => {
                         </span>
                     </label>
                     <textarea
-                        value={book.listOfContent ?? ""}
+                        value={formData.listOfContent}
                         onChange={(e) => handleChange("listOfContent", e.target.value)}
                         rows={8}
                         className="neo-input resize-y min-h-[120px] leading-relaxed rounded-2xl"

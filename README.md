@@ -31,7 +31,15 @@ A production-ready digital magazine platform specifically designed for schools a
   - Marquee text customization
   - Reading direction (LTR/RTL)
   - Animation physics controls
+- **PDF Import System**:
+  - One-click PDF to Spread conversion
+  - Automatic page splitting and optimization
+  - Preserves original quality while compressing
 - **Image Upload** with automatic WebP compression
+- **Performance Optimized UI**:
+  - Local state management for lag-free editing
+  - "Save to Apply" pattern for heavy operations
+  - Instant feedback on text inputs
 - **Publish/Unpublish** control for issues
 - **Live Preview** - See changes before publishing
 - **Role-based authentication** via Supabase
